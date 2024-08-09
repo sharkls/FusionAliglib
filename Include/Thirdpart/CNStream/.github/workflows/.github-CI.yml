@@ -1,0 +1,27 @@
+name: C/C++ CI
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  job_lintgit_check:
+    runs-on: cnstream-video
+    steps:
+    - uses: actions/checkout@v2
+      with:
+          fetch-depth: 0  
+    - name: Run lintgit
+      run: ./tools/lintgit origin/master
+       
+  unit_test:
+    runs-on: cnstream-video
+    steps:
+    - uses: actions/checkout@v2
+      with:
+          submodules: true
+    - name: configure
+      run:  mkdir build && cd build && cmake -Dbuild_tests=ON .. && make -j
+    - name: test
+      run: export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/neuware/lib64 && ./build/bin/cnstream_core_test && ./build/bin/cnstream_test
