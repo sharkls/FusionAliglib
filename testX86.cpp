@@ -34,6 +34,7 @@
 #include "ExportSceneAlgLib.h"
 #include "ExportTriggerAlgLib.h"
 #include "Export2K1VAlgLib.h"
+#include "ExportTestAlgLib.h"
 #include <experimental/filesystem>
 
 using namespace tinyxml2;
@@ -221,11 +222,6 @@ namespace ops{
     }
 };
 
-void test_cb(const CAlgResult& ms, void* hd)
-{
-    std::cout << "********************** test_cb ****************** \n";
-}
-
 std::vector<std::string> getFilesList(const std::string &dirpath)
 {
     DIR *dir = opendir(dirpath.c_str());
@@ -259,49 +255,6 @@ std::vector<std::string> getFilesList(const std::string &dirpath)
     std::sort(all_path.begin(), all_path.end());
     return all_path;
 }
-
-// void testPc()
-// {
-//     std::string pc_path = "/data/AlgLib/data/pc_data/city_64sig/";
-//     std::vector<std::string> fileNames = getFilesList(pc_path);
-
-//     //算法接口调用流程基本如下：
-//     IPcAlg* l_pObj = CreatePcAlgObj("/data/AlgLib/Output");
-//     //准备算法参数
-//     CSelfAlgParam *l_tAlgParam = new CSelfAlgParam();
-//     CLidarDev lidar_a;
-
-//     l_tAlgParam->m_tPcPreprocessParam.nCropFilter() = 0;
-//     l_tAlgParam->m_tPcPreprocessParam.fRoughLanRotationX() = 0;
-//     l_tAlgParam->m_tPcPreprocessParam.fRoughLanRotationY() = 0;
-//     l_tAlgParam->m_tPcPreprocessParam.fRoughLanRotationZ() = 0;
-//     l_tAlgParam->m_strPcCfgPath = "/Configs/Alg/point_cloud/point_cloud.yaml";
-//     l_tAlgParam->m_tLidarParam.vecLidarDev().push_back(lidar_a);
-//     l_tAlgParam->m_nLidarIndex = 2; //对应雷达ID
-//     l_tAlgParam->m_tLidarParam.vecLidarDev()[0].strBmpPath1(" ");
-
-//     // 初始化算法接口对象
-//     l_pObj->InitAlgorithm(l_tAlgParam,  test_cb, nullptr);
-
-//     // 准备点云数据
-//     CPcSrcData l_stPcSrcData;
-//     for (int i = 0; i < fileNames.size(); ++i)
-//     {
-//         std::string point_path = pc_path + fileNames[i];
-//         //为了测试的时候给数据文件名，暂时使用strIp
-//         CLidarInfo lidar_data;
-//         l_stPcSrcData.stSrcInfo().vecLidaInfo().push_back(lidar_data);
-//         l_stPcSrcData.stSrcInfo().vecLidaInfo()[0].strIp() = fileNames[i];
-//         std::cout << "pointcloud testing : " << point_path << std::endl;
-
-//         read_pc_data(point_path, l_stPcSrcData);
-//         l_pObj->RunAlgorithm(&l_stPcSrcData);
-//         usleep(1000*100);
-
-//     }
-
-//     delete l_pObj;
-// }
 
 // // 视频回调函数（测试使用）
 void test_vb(const CAlgResult& ms, void* hd)
@@ -418,10 +371,79 @@ void testVideo()
     delete l_pObj;
 }
 
+// // 视频回调函数（测试使用）
+void test_cb(const CAlgResult& ms, void* hd)
+{
+    std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&& test_vb &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& \n";
+}
 
+void test()
+{
+    std::string img_path = "/share/Code/FusionAliglib/data/video_data/";
+    //算法接口调用流程基本如下：
+    ITestAlg* l_pObj = CreateTestAlgObj("/share/Code/FusionAliglib/Output");
+    //准备算法参数
+    CSelfAlgParam *l_stTestAlgParam = new CSelfAlgParam();
+    l_stTestAlgParam->m_strRootPath = "/share/Code/FusionAliglib/Output";
+    l_stTestAlgParam->m_strTestCfgPath = "/Configs/Alg/test/test.yaml";
+
+
+    // 初始化算法接口对象
+    l_pObj->InitAlgorithm(l_stTestAlgParam,  test_cb, nullptr);
+
+    // //准备视频数据。。。
+    int CamNUm = 4;
+    CVideoSrcDataTimematch l_pVideoSrcData;
+    for (int i = 0; i < 600; i++)
+    {
+        for (int j = 0; j < CamNUm; ++j)
+        {
+            cv::Mat img_ori = cv::imread(img_path + std::to_string(i) + ".png");
+            //  cv::Mat img_ori = cv::imread(img_path + "frame_" + std::to_string(i) + ".png");
+            std::cout << "<<<<img_ori.size() : " << img_path + std::to_string(i) + ".png"  << std::endl;
+            if (img_ori.empty()) {
+                std::cerr << "Error: img_ori is empty. Failed to load image." << std::endl;
+                continue; // 跳过当前迭代
+            }
+            cv::Size targetSize(640, 640);
+            cv::Mat img;
+            cv::resize(img_ori, img, targetSize, 0, 0, cv::INTER_LINEAR);
+
+            // 直接使用img.data初始化vector
+            std::vector<uint8_t> l_MatBuff(img.data, img.data + img.total() * img.elemSize());
+
+            CVideoSrcData l_stVideoData;
+            l_stVideoData.unFrameId(i);
+            l_stVideoData.ucCameraId(j);
+            std::map<uint8_t, uint64_t> timeStampMap;
+            timeStampMap[0] = i;
+            timeStampMap[1] = i;
+            l_stVideoData.mapTimeStamp(timeStampMap);
+            l_stVideoData.usBmpLength(640);
+            l_stVideoData.usBmpWidth(640);
+            l_stVideoData.vecImageBuf(l_MatBuff);
+            l_stVideoData.unBmpBytes(l_MatBuff.size());
+
+            // 获取 m_vecVideoSrcData，添加元素，然后重新设置
+            std::vector<CVideoSrcData> vecVideoSrcData = l_pVideoSrcData.vecVideoSrcData();
+            vecVideoSrcData.push_back(l_stVideoData);
+            l_pVideoSrcData.vecVideoSrcData(vecVideoSrcData);
+        }
+        std::cout << "RunAlgorithm data start!:"<< i << std::endl;
+        l_pObj->RunAlgorithm(&l_pVideoSrcData);
+        usleep(1000*100);
+
+        // 清除 m_vecVideoSrcData
+        std::vector<CVideoSrcData> vecVideoSrcData = l_pVideoSrcData.vecVideoSrcData();
+        vecVideoSrcData.clear();
+        l_pVideoSrcData.vecVideoSrcData(vecVideoSrcData);
+    }
+    delete l_pObj;
+}
 // //测试算法接口调用流程
 int main(int argc, char* argv[])
 {
-    testVideo();
+    // testVideo();
+    test();
     return 0;
 }

@@ -49,4 +49,7 @@ struct CSelfAlgParam
 	std::vector<std::string> 	m_vecPcClass;
 	std::vector<std::string> 	m_vecFusionClass;
 	nlohmann::json 	  			m_fusion_parameter;
+
+	// 测试算法参数
+	std::string 	    		m_strTestCfgPath;					//算法配置文件相对路径
 };

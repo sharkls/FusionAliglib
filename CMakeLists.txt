@@ -119,7 +119,7 @@ if(CMAKE_PLATFORM MATCHES "86")
     # target_link_libraries(${PROJECT_NAME} PRIVATE EventAlg)
     # target_link_libraries(${PROJECT_NAME} PRIVATE TriggerAlg)
     # target_link_libraries(${PROJECT_NAME} PRIVATE 2K1VAlg)
-    # target_link_libraries(${PROJECT_NAME} PRIVATE TestAlg)
+    target_link_libraries(${PROJECT_NAME} PRIVATE TestAlg)
 
 elseif(CMAKE_PLATFORM MATCHES "1046")
     # 生成可执行程序
