@@ -2,12 +2,24 @@
 
 # 图像算法选择
 VIDEO_ALG:
-  # 点云预处理算法
+  # 预处理算法
   PRE_ISVALID: True
   PRE_ALG: "video_pre_1"
-  # 点云推理算法
+  # 推理算法
   PROCESSING_ISVALID: True
   PROCESSING_ALG: "yolov5"
-  # 点云后处理算法
+  # 后处理算法
   POST_ISVALID: True
   POST_ALG: "video_post_1"
+
+  # 测试算法选择
+TEST_ALG:
+  # 预处理算法
+  PRE_ISVALID: True
+  PRE_ALG: "pre_1"
+  # 推理算法
+  PROCESSING_ISVALID: True
+  PROCESSING_ALG: "model_x"
+  # 后处理算法
+  POST_ISVALID: True
+  POST_ALG: "post_1"
