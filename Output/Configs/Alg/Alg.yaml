@@ -1,6 +1,6 @@
 # 算法选择配置文件
 
-# 图像算法选择
+# 算法选择
 VIDEO_ALG:
   # 预处理算法
   PRE_ISVALID: True

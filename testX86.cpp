@@ -35,6 +35,7 @@
 #include "ExportTriggerAlgLib.h"
 #include "Export2K1VAlgLib.h"
 #include "ExportTestAlgLib.h"
+#include "ExportTestAlgLib.h"
 #include <experimental/filesystem>
 
 using namespace tinyxml2;
