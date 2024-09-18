@@ -1,7 +1,7 @@
 /*******************************************************
  文件：CSelfAlgParam.h
- 作者：
- 描述：算法内部使用的参数结构体
+ 作者：ls
+ 描述：算法库内部使用的参数结构体
  版本：v2.0
  日期：2024-1-3
  *******************************************************/
@@ -9,7 +9,6 @@
 #include <functional>
 #include "CLidarParam.h"
 #include "CCameraParam.h"
-// #include "CStationParam.h"
 #include "CAlgResult.h"
 #include "json.hpp"
 
@@ -36,8 +35,7 @@ struct CSelfAlgParam
 	std::vector<std::string>	m_vecVideoClass;		//视频检测类别
 
 	//融合算法参数
-	bool 						m_bFusion;				//是否融合 
-	int 						m_nStationId;			//基站ID  
+	bool 						m_bFusion;				//是否融合   
     uint16_t            		m_unFusionWaitTime;     //最长等待时间
 
 	//融合跟踪算法参数

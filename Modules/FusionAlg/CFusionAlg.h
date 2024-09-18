@@ -23,7 +23,7 @@
 #include "CSelfAlgParam.h"
 #include "CSafeDataDeque.h"
 
-class CFusionAlg :public IFusionTrackingAlg
+class CFusionAlg :public IFusionAlg
 {
 public:
     CFusionAlg(const std::string& p_strOutPath);

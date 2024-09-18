@@ -1,4 +1,3 @@
-#include "Thirdpart/av_opencv/opencv2/core/mat.hpp"
 #include <stdio.h>
 #include <chrono>
 #include <assert.h>
@@ -30,10 +29,6 @@
 #include "ExportVideoAlgLib.h"
 #include "CVideoSrcData.h"
 #include "ExportFusionAlgLib.h"
-#include "ExportEventAlgLib.h"
-#include "ExportSceneAlgLib.h"
-#include "ExportTriggerAlgLib.h"
-#include "Export2K1VAlgLib.h"
 #include "ExportTestAlgLib.h"
 #include <experimental/filesystem>
 
@@ -59,32 +54,8 @@ const float camera_param_dis[4][5]    = {{-0.3341, 0.1085, 0.000413,    0.000706
                                          {-0.3341, 0.1085, 0.000413,    0.00070638,  0},
                                          {-0.3341, 0.1085, 0.000413,    0.00070638,  0}};
 
-// /*相机内外参   此处为上地西67，68，126ip的相机参数*/
-// const float camera_param_in[3][9]     = {{1174.07467031771, 0, 975.559052741506, 0, 1167.92176860689, 572.720893252979, 0, 0, 1},
-//                                          {1154.07467031771, 0, 975.559052741506, 0, 1207.92176860689, 572.720893252979, 0, 0, 1},
-//                                          {1155.023180,      0, 967.178167,       0, 1149.531704,      541.645587,       0, 0, 1}};
-// const float camera_param_rotate[3][3] = {{1.6303330135419367, -1.4019180977442631,  0.8723481431372321},
-//                                          {1.3731985950150833,  1.5004915129867642  -1.1267008444124609},
-//                                          {-2.4249080614788,   -1.2204040053466,    -2.31865241843}};
-// const float camera_param_trans[3][3]  = {{680.48,             303.28000000000003, -250.43},
-//                                          {-367.4599999999999, 393.5,              4.88},
-//                                          {500.000,            -25.652,            70.477}};
-// const float camera_param_dis[3][5]    = {{-0.318846891959627, 0.0902775208989156, 0.000282528081340622, 0.000800223746856249, 0},
-//                                          {-0.318846891959627, 0.0902775208989156, 0.000282528081340622, 0.000800223746856249, 0},
-//                                          {-0.317613,          0.088368,          -0.001007,            -0.000789,             0}};
-
-// /*相机内外参   此处为8号门51，50ip的相机参数*/
-// const float camera_param_in[2][9]     = {{1152.4, 0, 959.409, 0, 1147.4, 550.065, 0, 0, 1},
-//                                          {1147.9, 0, 951.689, 0, 1143.4, 566.33,  0, 0, 1}};
-// const float camera_param_rotate[2][3] = {{1.85233,  0.624684, -0.484852},
-//                                          {2.02309,  0.128325, -0.105201}};
-// const float camera_param_trans[2][3]  = {{234.929,  151.025, -0.075},
-//                                          {95.262,   164.969,  15.345}};
-// const float camera_param_dis[2][5]    = {{-0.3341,  0.1085,  0.000413,   0.00070638, 0},
-//  {-0.3335,  0.109,  -0.00068918, 0.0013,     0}};
-
- int timestamp = 0;
- void save_fusion_result_to_csv(std::string path, CAlgResult outputAlgResult);
+int timestamp = 0;
+void save_fusion_result_to_csv(std::string path, CAlgResult outputAlgResult);
 
 inline void file_to_string(vector<string> &record, const string& line, char delimiter)
 {
@@ -256,7 +227,7 @@ std::vector<std::string> getFilesList(const std::string &dirpath)
     return all_path;
 }
 
-// // 视频回调函数（测试使用）
+// // 视频回调函数（测试视频算法使用）
 void test_vb(const CAlgResult& ms, void* hd)
 {
 
@@ -286,6 +257,7 @@ void test_vb(const CAlgResult& ms, void* hd)
     }
     file.close();
 }
+
 void testVideo()
 {
     std::string img_path = "/share/Code/FusionAliglib/data/video_data/";
@@ -371,7 +343,7 @@ void testVideo()
     delete l_pObj;
 }
 
-// // 视频回调函数（测试使用）
+// // 测试回调函数（测试算法使用）
 void test_cb(const CAlgResult& ms, void* hd)
 {
     std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&& test_vb &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& \n";
@@ -440,10 +412,293 @@ void test()
     }
     delete l_pObj;
 }
+
+// 融合算法回调函数（测试融合算法使用）
+void fusionAlg_CallBack(const CAlgResult& ms, void* hd)
+{
+    std::cout << "********************** test_Fcb ****************** \n";
+    std::string l_sOutPutPath = "/share/Code/FusionAliglib/Output/FusionResults/";
+    save_fusion_result_to_csv(l_sOutPutPath, ms);
+}
+
+bool jsonload(nlohmann::json &json_data, std::string filepath)
+{
+    std::string::size_type name_pos = filepath.find_last_of('/') + 1;
+    std::string filename = filepath.substr(name_pos, filepath.length() - name_pos);
+    std::string file_extension = filepath.substr(filepath.find_last_of('.') + 1);
+    std::string name = filename.substr(0, filename.rfind("."));
+    if (file_extension.compare("json") != 0)
+    {
+        return false;
+    }
+    std::ifstream ifs(filepath, std::ios::in);
+    if (!ifs.good())
+    {
+        std::cout << filepath << " No such Json File\n"
+                  << std::endl;
+        return false;
+    }
+    if (!(ifs >> (json_data[name])))
+    {
+        std::cout << filepath << " Error reading Json File\n"
+                  << std::endl;
+        return false;
+    }
+    return true;
+}
+
+void read_fusiondata(const std::string & data_path, int i, int cam_num, CAlgResult& l_FuTrSrcData, CSelfAlgParam *&l_stFuAlgParam)
+{
+    //Read Outline Video Data
+    CFrameResult l_stFuSrcData_vedio;
+    l_stFuSrcData_vedio.unFrameId(i);
+    // cam_num = 4;
+
+    char frameNum[7];
+    snprintf(frameNum, sizeof(frameNum), "%06d", i);
+
+    for (int j = 0; j < cam_num; j++) //cam_num = 3
+    {
+        //read vedio detection results
+        auto video_path = data_path + "VideoBox_Channel" + std::to_string(j) + "/Frame_" + frameNum + ".npy" ;
+        std::cout << "read video_path:" << video_path << std::endl;
+        char * cf = const_cast<char *>(video_path.c_str());
+        struct stat sb;
+
+        if (stat(cf, &sb) !=0)
+        {
+            std::cout<<video_path<<"file does not exist"<<endl;
+            return;
+        }
+
+        xt::xarray<double> video_src_data = xt::load_npy<double>(video_path);
+
+        // Push video results to CAlgResult instance
+        CObjectResult videoSrcResult;
+        l_stFuSrcData_vedio.tCameraSupplement().ucCameraId(j + 1);
+
+        for (int k = 0; k < video_src_data.shape(0); k++)
+        {
+            CObjectResult m_videobox;
+            m_videobox.sXCoord(video_src_data(k, 0));
+            m_videobox.sYCoord(video_src_data(k, 1));
+            m_videobox.usWidth(video_src_data(k, 2));
+            m_videobox.usLength(video_src_data(k, 3));
+            m_videobox.sCourseAngle(video_src_data(k, 4));
+            m_videobox.sZCoord(video_src_data(k, 5));
+            m_videobox.usHeight(video_src_data(k, 6));
+            m_videobox.strClass(std::string(l_stFuAlgParam->m_fusion_parameter["fusion_param"]["m_strVideoClass"][video_src_data(k,7)]));
+            m_videobox.sSpeed(video_src_data(k, 8));
+            m_videobox.usTargetId(video_src_data(k, 9));
+            m_videobox.fVideoConfidence(int(video_src_data(k, 10) * 100));
+            m_videobox.fTopLeftX(video_src_data(k, 11)) ;
+            m_videobox.fTopLeftY(video_src_data(k, 12)) ;
+            m_videobox.fBottomRightX(video_src_data(k, 13));
+            m_videobox.fBottomRightY(video_src_data(k, 14));
+            // m_videobox.sChannel
+            m_videobox.ucSource(video_src_data(k, 15));
+
+            l_stFuSrcData_vedio.vecObjectResult().push_back(m_videobox);
+        }
+        l_stFuSrcData_vedio.eDataType() = DATA_TYPE_VIDEO_RESULT;
+        l_stFuSrcData_vedio.mapTimeStamp()[TIMESTAMP_PCSRCINFO_SUB] = timestamp;
+        timestamp = timestamp + 100;
+
+         l_FuTrSrcData.vecFrameResult().push_back(l_stFuSrcData_vedio);
+
+        CAlgResult PrintVideoFrame;
+        PrintVideoFrame.vecFrameResult().push_back(l_stFuSrcData_vedio);
+        // save_fusion_result_to_csv(data_path +"VideoBox_Channel" + std::to_string(j) +"_csv/", PrintVideoFrame);
+    }
+
+    //pointcloud
+    string pc_path = data_path + "PcBox/Frame_" + frameNum  + ".npy";
+    xt::xarray<double> pc_src_data =  xt::load_npy<double>(pc_path);
+
+    CFrameResult l_stFuSrcData_pc;
+    l_stFuSrcData_pc.unFrameId(i);
+
+    for (int j = 0; j < pc_src_data.shape(0); j++)
+    {
+        CObjectResult pcbox;
+        pcbox.sXCoord(int(pc_src_data(j, 0) * 100));
+        pcbox.sYCoord(int(pc_src_data(j, 1) * 100));
+        pcbox.sZCoord(int(pc_src_data(j, 2) * 100));
+        pcbox.usWidth(int(pc_src_data(j, 3) * 100));
+        pcbox.usLength(int(pc_src_data(j, 4) * 100));
+        pcbox.usHeight(int(pc_src_data(j, 5) * 100));
+
+        pcbox.sCourseAngle(pc_src_data(j, 6));
+        pcbox.strClass(l_stFuAlgParam->m_fusion_parameter["fusion_param"]["m_strPcClass"][int(pc_src_data(j,7))]);
+        pcbox.fPcConfidence(int(pc_src_data(j,8) * 100));
+        pcbox.sSpeed(pc_src_data(j,9));
+        pcbox.usTargetId(pc_src_data(j,10));
+        pcbox.ucSource(pc_src_data(j,11));
+        l_stFuSrcData_pc.vecObjectResult().push_back(pcbox);
+
+    }
+    l_stFuSrcData_pc.tLidarSupplement().dLidarLon(l_stFuAlgParam->m_tLidarParam.vecLidarDev()[0].dLidarLon());
+    l_stFuSrcData_pc.tLidarSupplement().dLidarLat(l_stFuAlgParam->m_tLidarParam.vecLidarDev()[0].dLidarLat());
+    l_stFuSrcData_pc.tLidarSupplement().fLidarNorthAngle(l_stFuAlgParam->m_tLidarParam.vecLidarDev()[0].fLidarNorthAngle());
+    l_stFuSrcData_pc.mapTimeStamp()[TIMESTAMP_PCSRCINFO_SUB] = timestamp;
+    l_stFuSrcData_pc.eDataType(DATA_TYPE_PC_RESULT) ;
+
+    l_FuTrSrcData.vecFrameResult().push_back(l_stFuSrcData_pc);
+
+    CAlgResult PrintPcFram; //
+    PrintPcFram.vecFrameResult().push_back(l_stFuSrcData_pc);
+    // save_fusion_result_to_csv(data_path + "PcBox_csv/", PrintPcFram);
+}
+
+void save_fusion_result_to_csv(std::string path, CAlgResult outputAlgResult){
+    std::string rootPath = "/data/AlgLib/";
+    std::string filepath1 = rootPath + "Output/Configs/Alg/fusion/fusion_param.json";
+    nlohmann::json temp_param1;
+    bool isload = jsonload(temp_param1, filepath1);
+
+    for(int i = 0 ; i < outputAlgResult.vecFrameResult().size(); i++){
+        std::ofstream file;
+        int fid = outputAlgResult.vecFrameResult()[i].unFrameId();
+        string file_path = std::string(path + "Frame_" + std::to_string(fid) +".csv");
+        fs::path pathObj = (file_path);
+        if(!fs::exists(pathObj.parent_path()))
+        {
+            fs::create_directories(pathObj.parent_path());
+        }
+        file.open(file_path);
+        // 检查文件是否成功打开
+        if (!file.is_open()) {
+            std::cout << "无法打开文件" << std::endl;
+        }
+        else
+        {
+            for (int j = 0; j < outputAlgResult.vecFrameResult()[i].vecObjectResult().size(); j++)
+            {
+                int ID = outputAlgResult.vecFrameResult()[i].vecObjectResult()[j].usTargetId();
+                float X = outputAlgResult.vecFrameResult()[i].vecObjectResult()[j].sXCoord()/100.0;
+
+                float y = outputAlgResult.vecFrameResult()[i].vecObjectResult()[j].sYCoord()/100.0 ;
+                float z = outputAlgResult.vecFrameResult()[i].vecObjectResult()[j].sZCoord()/100.0 ;
+                float w = outputAlgResult.vecFrameResult()[i].vecObjectResult()[j].usWidth()/100.0 ;
+                float l = outputAlgResult.vecFrameResult()[i].vecObjectResult()[j].usLength()/100.0 ;
+                float h = outputAlgResult.vecFrameResult()[i].vecObjectResult()[j].usHeight()/100.0 ;
+                float s = outputAlgResult.vecFrameResult()[i].vecObjectResult()[j].sSpeed()/100.0 ;
+                float a = outputAlgResult.vecFrameResult()[i].vecObjectResult()[j].sCourseAngle() ;
+                std::string cls1 = outputAlgResult.vecFrameResult()[i].vecObjectResult()[j].strClass() ;
+                float cls = 0;
+                for(int i = 0; i < temp_param1["fusion_param"]["m_strFusionClass"].size(); i++)
+                {
+                    if(cls1 == temp_param1["fusion_param"]["m_strFusionClass"][int(i)])
+                    {
+                        cls = i;
+                    }
+                }
+
+                int src = int(outputAlgResult.vecFrameResult()[i].vecObjectResult()[j].ucSource()) ;
+                double dlon1 = outputAlgResult.vecFrameResult()[i].vecObjectResult()[j].dLon() ;
+                double dlat1 =outputAlgResult.vecFrameResult()[i].vecObjectResult()[j].dLat() ;
+                float Conf = outputAlgResult.vecFrameResult()[i].vecObjectResult()[j].fPcConfidence() ;
+                int channel = outputAlgResult.vecFrameResult()[i].vecObjectResult()[j].usVideoInfo()[4];
+                float ltx = outputAlgResult.vecFrameResult()[i].vecObjectResult()[j].fTopLeftX();
+                float lty = outputAlgResult.vecFrameResult()[i].vecObjectResult()[j].fTopLeftY();
+                float rbx = outputAlgResult.vecFrameResult()[i].vecObjectResult()[j].fBottomRightX();
+                float rby = outputAlgResult.vecFrameResult()[i].vecObjectResult()[j].fBottomRightY();
+                unsigned long long ti = outputAlgResult.vecFrameResult()[i].vecObjectResult()[j].ulFirstOccurTime();
+                int lane = outputAlgResult.vecFrameResult()[i].vecObjectResult()[j].usLaneNum();
+
+                file << ID <<","<< cls1<< ","<< X << "," << y << ", "<<z<<", "<< w<<","<< l <<" ,"<<h<<","<< s <<","<< a <<","<<src<<","<<Conf<<endl;
+//                file << cls << "," << src << ","  << Conf << "," << X << "," << y << "," << z << "," << l << "," << w << "," << h << "," << a << "," << ltx << "," << lty << "," << rbx << "," << rby << "," << ID << "," << lane << "," << s << "," << ti << "," << channel <<endl;
+            }
+        }
+        file.close();
+    }
+}
+
+int testFusion()
+{
+    int cam_num = 4;
+    std::string rootPath = "/share/Code/FusionAliglib/";
+    IFusionAlg* l_pObj = CreateFusionAlgObj(rootPath + "Output");
+    CSelfAlgParam *l_stFuAlgParam = new CSelfAlgParam();
+    CLidarDev Lidar1;
+
+    // 设置雷达参数 ：经纬度、北向夹角
+    Lidar1.dLidarLon(120.626484706589);
+    Lidar1.dLidarLat(31.4241149141);
+    Lidar1.fLidarNorthAngle(92.22);
+    l_stFuAlgParam->m_tLidarParam.vecLidarDev().push_back(Lidar1);
+
+    // 设置相机参数
+    l_stFuAlgParam->m_tCameraParam.vecCameraDev().resize(cam_num);
+    // l_stFuAlgParam->m_tCameraParam.bUse485(false);
+    l_stFuAlgParam->m_tCameraParam.unCameraCount(cam_num);
+    for(int i = 0; i < cam_num; i++)
+    {
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecInParameter().resize(9);            // 内参
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecRotateMatrix().resize(3);           // 旋转
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecTranslationMatrix().resize(3);      // 平移
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecDistMatrix().resize(5);             // 畸变系数
+
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecInParameter().push_back(camera_param_in[i][0]);
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecInParameter().push_back(camera_param_in[i][1]);
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecInParameter().push_back(camera_param_in[i][2]);
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecInParameter().push_back(camera_param_in[i][3]);
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecInParameter().push_back(camera_param_in[i][4]);
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecInParameter().push_back(camera_param_in[i][5]);
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecInParameter().push_back(camera_param_in[i][6]);
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecInParameter().push_back(camera_param_in[i][7]);
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecInParameter().push_back(camera_param_in[i][8]);
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecRotateMatrix().push_back(camera_param_rotate[i][0]);
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecRotateMatrix().push_back(camera_param_rotate[i][1]);
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecRotateMatrix().push_back(camera_param_rotate[i][2]);
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecTranslationMatrix().push_back(camera_param_rotate[i][0]);
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecTranslationMatrix().push_back(camera_param_rotate[i][1]);
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecTranslationMatrix().push_back(camera_param_rotate[i][2]);
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecDistMatrix().push_back(camera_param_dis[i][0]);
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecDistMatrix().push_back(camera_param_dis[i][1]);
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecDistMatrix().push_back(camera_param_dis[i][2]);
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecDistMatrix().push_back(camera_param_dis[i][3]);
+        l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecDistMatrix().push_back(camera_param_dis[i][4]);
+    }
+    
+    std::string filepath1 = rootPath + "Output/Configs/Alg/fusion/fusion_param.json";
+    nlohmann::json temp_param1;
+    bool isload = jsonload(temp_param1, filepath1);
+    l_stFuAlgParam->m_fusion_parameter = temp_param1;
+    l_stFuAlgParam->m_strRootPath = "/data/AlgLib/Output";
+    l_pObj->InitAlgorithm(l_stFuAlgParam, fusionAlg_CallBack, nullptr );
+
+    for(int i = 278; i < 378; ++i) //i = the frame index
+    {
+        std::cout<<"Processing Frame: ("<<std::to_string(i)<<")  started."<<endl;
+
+        CAlgResult *p_pSrcData = new CAlgResult();
+        read_fusiondata(rootPath + "data/fusion_test_data/" , i, cam_num, *p_pSrcData, l_stFuAlgParam);
+        auto t_start = std::chrono::steady_clock::now();
+
+        if (p_pSrcData->vecFrameResult().size() > 0)
+        {
+            l_pObj->RunAlgorithm(p_pSrcData);
+            timestamp = timestamp + 100;
+            auto t_end = std::chrono::steady_clock::now();
+            double latency = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+        }
+        usleep(1000*100);
+        delete p_pSrcData;
+    }
+
+
+    delete l_pObj;
+    delete l_stFuAlgParam;
+    return 0;
+}
+
+
 // //测试算法接口调用流程
 int main(int argc, char* argv[])
 {
     // testVideo();
-    test();
+    // test();
+    testFusion();
     return 0;
 }

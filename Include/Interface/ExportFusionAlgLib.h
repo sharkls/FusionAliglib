@@ -8,14 +8,13 @@
 
 #pragma once
 #include <string>
-// #include "IFusionTrackingAlg.h"
 
 #include "CSelfAlgParam.h"
 
-struct IFusionTrackingAlg
+struct IFusionAlg
 {
-    IFusionTrackingAlg(){}
-    virtual ~IFusionTrackingAlg(){}
+    IFusionAlg(){}
+    virtual ~IFusionAlg(){}
     
     //初始化算法接口对象，内部主要处理只需初始化一次的操作，比如模型加载之类的，成功返回true，失败返回false
     virtual bool  InitAlgorithm(CSelfAlgParam* p_pAlgParam,  const AlgCallback& alg_cb, void* hd)   = 0;
@@ -24,4 +23,4 @@ struct IFusionTrackingAlg
     virtual void RunAlgorithm(void* p_pSrcData)     = 0;
 };
 
-extern "C" __attribute__ ((visibility("default"))) IFusionTrackingAlg*  CreateFusionTrackingAlgObj(const std::string& p_strExePath);
+extern "C" __attribute__ ((visibility("default"))) IFusionAlg*  CreateFusionAlgObj(const std::string& p_strExePath);

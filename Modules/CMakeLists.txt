@@ -2,7 +2,7 @@
 if(CMAKE_PLATFORM MATCHES "86")
     # add_subdirectory(PointcloudAlg)
     add_subdirectory(VideoAlg)
-    # add_subdirectory(FusionAlg)
+    add_subdirectory(FusionAlg)
     # add_subdirectory(SceneAlg)
     # add_subdirectory(EventAlg)
     # add_subdirectory(TriggerAlg)

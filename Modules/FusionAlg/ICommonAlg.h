@@ -29,12 +29,15 @@ using CCommonDataPtr = std::shared_ptr<ICommonData>;
 class ICommonAlg{
  public:
   ICommonAlg(){};
+  
   virtual ~ICommonAlg() = default;
 
   virtual void init(CSelfAlgParam* p_pAlgParam) = 0;
+
   virtual void execute() = 0;
 
   virtual void setCommonData(CCommonDataPtr p_commonData) = 0;
+
   virtual CCommonDataPtr getCommonData() = 0;
 
  public:

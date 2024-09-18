@@ -1,0 +1,64 @@
+/*******************************************************
+ 文件：CVideoSrcData.idl
+ 作者：
+ 描述：视频原始数据结构体
+ 版本：v1.0
+ 日期：2023-12-02
+ *******************************************************/
+
+#include "CDataBase.idl"
+
+//单路视频结果结构体
+struct CVideoSrcData : CDataBase
+{
+	octet 					ucCameraId;				//相机编号
+	unsigned short 			usBmpLength;			//图片长度
+	unsigned short 			usBmpWidth;				//图片宽度
+	unsigned long 			unBmpBytes;				//图片数据字节长度
+	sequence<octet> 		vecImageBuf;			//获取的相机数据，是libav输出的图像数据，uinit8类型的数组，数组大小由图片宽高决定
+};
+
+//时间匹配好的视频结果结构体
+struct CVideoSrcDataTimematch : CDataBase
+{
+	sequence<CVideoSrcData>  vecVideoSrcData;		//与点云匹配好的每一路相机数据
+};
+
+//时间匹配好的视频结果结构体
+struct CTimematchMap : CDataBase
+{
+	// 时间匹配关系表，key为点云时间戳，value为图像时间戳
+    map<unsigned long long , unsigned long long> mapMatchTimeStamp;
+};
+
+//单路视频结果结构体
+@final
+struct CVideoSrcDataFixedLength 
+{
+	//存放各个阶段各种数据的时间戳：ms
+    unsigned long long          ulBufTimeStamp[10];
+
+    //存放各个阶段各种数据的时延
+    unsigned long               ulBufDelay[10];
+
+    //存放各个阶段各种数据的帧率
+    float                       ulBufFps[10];
+
+	unsigned long long          ulTimestampPub;      // 发送时间戳(测试中间件专用,测时延)
+    unsigned long               unSeqPub;            // 发送序列号(测试中间件专用,测丢包)
+
+    unsigned long     unFrameId;            //帧号
+    octet             eDataType;            //数据类型
+
+	unsigned short 	  usBmpLength;	        //图片长度
+	unsigned short 	  usBmpWidth;	        //图片宽度
+	unsigned long 	  unBmpBytes;	        //图片数据字节长度
+	octet 			  ucCameraId;	        //相机编号
+	octet             vecImageBuf[409600];  //获取的相机数据，是libav输出的图像数据，uinit8类型的数组，数组大小由图片宽高决定(目前是640 * 640)
+};
+
+@final
+struct CTimeMatchVideoSrcDataFixedLength
+{
+	CVideoSrcDataFixedLength    timeMatchFixedLengthVideoSrcData[8];	//时间匹配好的视频数据类型
+};

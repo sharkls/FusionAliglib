@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 # 执行文件另取别名
-project(testAlgLib)
+project(AlgLib)
 set(CMAKE_BUILD_TYPE Release)       # 设置编译模式
 if(NOT DEFINED CMAKE_PLATFORM)      # 设置编译平台
     set(CMAKE_PLATFORM 86)
@@ -64,20 +64,6 @@ if(CMAKE_PLATFORM MATCHES "86")
 else()
 endif()
 
-if(CMAKE_PLATFORM MATCHES "220")
-    link_directories(${CMAKE_SOURCE_DIR}/Submodules/TPL/CNStream)
-    link_directories(${CMAKE_SOURCE_DIR}/Submodules/TPL/cncv)
-    link_directories(${CMAKE_SOURCE_DIR}/Submodules/TPL/cambricon)
-else()
-endif()
-
-if(CMAKE_PLATFORM MATCHES "11")
-    link_directories(${CMAKE_SOURCE_DIR}/Submodules/TPL/fservo)
-    link_directories(${CMAKE_SOURCE_DIR}/Submodules/TPL/aarch64-xilinx-linux/usr/lib)
-    link_directories(${CMAKE_SOURCE_DIR}/Submodules/TPL/aarch64-xilinx-linux/lib)
-else()
-endif()
-
 # 子目录的路径
 add_subdirectory(Modules)
 add_subdirectory(Submodules/FastddsSer)
@@ -114,34 +100,6 @@ if(CMAKE_PLATFORM MATCHES "86")
     # 链接各算法模块的动态库
     # target_link_libraries(${PROJECT_NAME} PRIVATE PcAlg)
     target_link_libraries(${PROJECT_NAME} PRIVATE VideoAlg)
-    # target_link_libraries(${PROJECT_NAME} PRIVATE FusionAlg)
-    # target_link_libraries(${PROJECT_NAME} PRIVATE SceneAlg)
-    # target_link_libraries(${PROJECT_NAME} PRIVATE EventAlg)
-    # target_link_libraries(${PROJECT_NAME} PRIVATE TriggerAlg)
-    # target_link_libraries(${PROJECT_NAME} PRIVATE 2K1VAlg)
-    target_link_libraries(${PROJECT_NAME} PRIVATE TestAlg)
-
-elseif(CMAKE_PLATFORM MATCHES "1046")
-    # 生成可执行程序
-    add_executable(${PROJECT_NAME} test1046.cpp)
-
-    target_link_libraries(${PROJECT_NAME} PRIVATE yaml-cpp)
-    target_link_libraries(${PROJECT_NAME} PRIVATE tinyxml2)
-    target_link_libraries(${PROJECT_NAME} PRIVATE stdc++fs)
-    target_link_libraries(${PROJECT_NAME} PRIVATE glog)
-    target_link_libraries(${PROJECT_NAME} PRIVATE FastddsSer)
-
-    # 链接各算法模块的动态库
     target_link_libraries(${PROJECT_NAME} PRIVATE FusionAlg)
-    target_link_libraries(${PROJECT_NAME} PRIVATE SceneAlg)
-    target_link_libraries(${PROJECT_NAME} PRIVATE EventAlg)
-    target_link_libraries(${PROJECT_NAME} PRIVATE TriggerAlg)
-elseif(CMAKE_PLATFORM MATCHES "220")
-    add_executable(${PROJECT_NAME} test220.cpp)
-    target_link_libraries(${PROJECT_NAME} PRIVATE opencv_core)
-    target_link_libraries(${PROJECT_NAME} PRIVATE opencv_imgproc)
-    target_link_libraries(${PROJECT_NAME} PRIVATE opencv_imgcodecs)
-    target_link_libraries(${PROJECT_NAME} PRIVATE yaml-cpp)
-    target_link_libraries(${PROJECT_NAME} PRIVATE FastddsSer)
-    target_link_libraries(${PROJECT_NAME} PRIVATE VideoAlg)
+    target_link_libraries(${PROJECT_NAME} PRIVATE TestAlg)
 endif()

@@ -1,0 +1,96 @@
+/*******************************************************
+ 文件：CAlgResult.idl
+ 作者：
+ 描述：描述所有算法结果的统一结构
+ 版本：v1.0
+ 日期：2023-12-20
+ *******************************************************/
+#include "CDataBase.idl"
+
+// 本帧中所有目标的信息
+struct CObjectResult {
+    // 融合感知结果信息
+    string                   strClass;       // 目标类型（点云算法输出的类型与视频输出的类型映射关系不同，最好在此处使用字符串进行统一）
+    octet                    ucSource;       // 数据来源，0无数据，1相机，2激光雷达，3毫米波，4相机和雷达融合，5雷达和毫米波融合，6相机和毫米波融合，7相机、雷达、毫米波融合
+
+    // 3D目标框信息
+    unsigned short           usPcTargetId;   // 3d跟踪的id
+    float                    fPcConfidence;  // 点云检测置信度，范围为0到100
+    double                   dLon;           // 目标中心点经度
+    double                   dLat;           // 目标中心点纬度
+    short                    sElevation;     // 目标中心点海拔
+    short                    sXCoord;        // X轴坐标：cm
+    short                    sYCoord;        // Y轴坐标：cm
+    short                    sZCoord;        // Z轴坐标：cm
+    unsigned short           usLength;       // 长度：cm
+    unsigned short           usWidth;        // 宽度：cm
+    unsigned short           usHeight;       // 高度：cm
+    short                    sCourseAngle;   // 航向角，度
+
+    // 2D目标框信息
+    unsigned short           usVideoTargetId; // 2d跟踪的id
+    float                    fVideoConfidence;// 图像检测置信度，范围为0到100
+    float                    fTopLeftX;       // 左上角像素点
+    float                    fTopLeftY;       // 左上角像素点
+    float                    fBottomRightX;   // 右下角像素点
+    float                    fBottomRightY;   // 右下角像素点
+    octet                    ucColor;         // 颜色
+
+    // 跟踪结果相关信息
+    unsigned short           usTargetId;      // 跟踪结果目标ID
+    unsigned short           usLaneNum;       // 目标所在车道号
+    short                    sSpeed;          // 速度：cm/s
+    unsigned long long       ulFirstOccurTime;// 目标首次出现的时间戳
+    unsigned long            uiTimeSinceUpdate;
+    unsigned short           usHitNum;        // 击打次数
+    boolean                  bDeleteFlag;     // 是否删除该轨迹
+    unsigned short           usLifeCycle;     // 生命周期
+    unsigned short 	         ucSignFlag;	  // 坐标符号标识
+    unsigned short	         usVideoInfo[20]; // 点云目标框相关信息
+    unsigned short           usMissFrame;     // 丢失帧数
+    unsigned short           usFrame;         // 目标帧号（测试使用）
+
+    // 毫米波特有的结果信息
+    float                    fSpeedX;         //X方向速度
+    float                    fSpeedY;         //Y方向速度
+    float                    fAcceleration;   //加速度
+    float                    fRCS;            //目标散射面积dbm2
+};
+
+// 激光雷达附加信息
+struct CLidarSupplement {
+    octet                    ucLidarId;        // 雷达编号
+    double                   dLidarLon;        // 激光器原点经度（度）
+    double                   dLidarLat;        // 激光器原点纬度（度）
+    float                    fLidarNorthAngle; // 激光器与正北方向的夹角（度）
+};
+
+// 相机附加信息
+struct CCameraSupplement {
+    octet                    ucCameraId;       // 相机编号
+};
+
+// 毫米波附加信息
+struct CRadarSupplement {
+    octet                    ucRadarId;        // 毫米波编号
+};
+
+// 融合附加信息
+struct CFusionSupplemet {
+    sequence<long>           vecCrossingPeopleCount; // 各个方向路口的行人等待数量
+    sequence<long>           vecFusionId;            // 点云和视频识别结果目标中融合成功的目标id
+};
+
+// 该传感器在该帧的信息，点云和融合是单帧结果，图像是单张图像的结果
+struct CFrameResult : CDataBase {
+    sequence<CObjectResult>  vecObjectResult;      // 该帧中所有的参与者信息
+    CLidarSupplement         tLidarSupplement;     // 雷达附加信息
+    CCameraSupplement        tCameraSupplement;    // 相机附加信息
+    CRadarSupplement         tRadarSupplement;     // 毫米波附加信息
+    CFusionSupplemet         tFusionSupplement;    // 融合附加信息
+};
+
+// 算法结果通用的结构体
+struct CAlgResult :CDataBase {
+    sequence<CFrameResult>   vecFrameResult;        // 表示该传感器在该帧所有的结果，点云和融合是单帧结果，图像是所有图像的结果
+};

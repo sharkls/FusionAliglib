@@ -1,0 +1,37 @@
+/*******************************************************
+ 文件：CLidarParam.idl
+ 作者：
+ 描述：激光雷达参数结构体
+ 版本：v1.0
+ 日期：2023-12-02
+ *******************************************************/
+
+struct CLidarDev
+{
+	string				strSrcIp;	  		//雷达源IP
+	string				strDstIp;	  		//雷达目的IP
+	string				strRedisIp;	  		//雷达数据RedisIP
+	string				strRedisTopic;		//订阅雷达数据的Topic
+	string				strDataType;	  	//数据获取方式：pcap/udp/redis
+	string				strLidarType;	  	//雷达类型
+	string				strBmpPath1;		//Bmp
+	string				strBmpPath2;		//Bmp2，配合扩大参数范围使用
+	unsigned short		usPort;	  			//udp端口/redis端口/抓包目的端口
+	octet				ucLidarId;	  		//雷达ID
+	double				dLidarLon;	  		//雷达经度
+	double				dLidarLat;	  		//雷达纬度
+	float				fLidarNorthAngle;	//雷达北向夹角
+	boolean 			bRotationTranslation;	//是否旋转平移
+	float				fSelfRotTrans[6];	//自身的调平参数及和主雷达的匹配参数，旋转xyz,平移xyz
+	float				fRangeRotTrans1[6];	//扩大检测范围旋转平移预处理参数1，旋转xyz,平移xyz
+	float				fRangeRotTrans2[6];	//扩大检测旋转平移预处理参数1，旋转xyz,平移xyz
+	float				fUseAngle[4];	  	//角度限制,
+	octet				ucBuf[8];	  		//预留位
+    sequence<float> 	vecAngle;  	//对应各个相机的角度，从前往后，1，2，3，4
+};
+
+struct CLidarParam
+{
+	string 					strNICname;			//网卡名，即从哪个网卡抓取雷达数据
+	sequence<CLidarDev> 	vecLidarDev;		//雷达设备
+};

@@ -1,0 +1,38 @@
+/*******************************************************
+ 文件：CCameraParam.idl
+ 作者：
+ 描述：相机配置文件的相关参数
+ 版本：v1.0
+ 日期：2023-12-02
+ *******************************************************/
+
+struct C485Param
+{
+	boolean 		bNetTranf;	//是否通过网络传输相机校准时间戳
+	string 			strUsbDev;	//USB串口设备文件路径
+	unsigned long 	unBaudRate;	//波特率
+	float 			fTimeout;	//超时时间
+	unsigned long 	unId;		//id,对应相机id
+	string 			strIp;		//网络传输ip
+    unsigned long	unPort;		//网络传输port
+};
+
+struct CCameraDev
+{
+	string 					strCameraIp;			//相机IP
+	unsigned short 			usCameraId;				//相机序号
+	string 					strCameraUser;			//相机用户名
+	string 					strCameraPwd;			//相机用户密码
+	sequence<float> 		vecInParameter;			//内参
+	sequence<float> 		vecRotateMatrix;		//旋转矩阵
+	sequence<float> 		vecTranslationMatrix;	//平移矩阵
+	sequence<float> 		vecDistMatrix;			//畸变系数
+};
+
+struct CCameraParam
+{
+	unsigned short 			unCameraCount;		//相机个数
+	boolean 				bUseVideoServer;    //是否从视频服务器拉取视频
+	octet					cameraType;			//相机类型(0.短焦 1.鱼眼)
+	sequence<CCameraDev> 	vecCameraDev;		//相机设备参数
+};
