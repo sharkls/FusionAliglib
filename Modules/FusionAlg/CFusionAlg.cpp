@@ -2,7 +2,7 @@
 
 std::string	CFusionAlg::GetVersion()
 {
-    return "AlgLib FusionTrackAlg V1.3";
+    return "AlgLib FusionAlg V1.3";
 }
 
 CFusionAlg::CFusionAlg(const std::string& p_strExePath)
@@ -15,17 +15,17 @@ CFusionAlg::~CFusionAlg()
 
 }
 
-bool CFusionAlg::InitAlgorithm(CSelfAlgParam* p_pAlgParam, const AlgCallback& alg_cb, void* hd)
+bool CFusionAlg::InitAlgorithm(CSelfAlgParam* l_pAlgParam, const AlgCallback& alg_cb, void* hd)
 {
-    if (!p_pAlgParam){
+    if (!l_pAlgParam){
         LOG(ERROR) << "CFusionAlg::InitAlgorithm ---- End >>> Failed : The incoming parameter is empty.";
         return false;
     }
 
-    m_stSelfFuTrAlgParam = *p_pAlgParam;
+    m_stSelfFusionAlgParam = *l_pAlgParam;
 
     // 1.回调函数设置
-    futr_callback = alg_cb;
+    futr_callback = alg_cb;     
     futr_hd = hd;
 
     // 2. 算法选择
@@ -39,19 +39,19 @@ bool CFusionAlg::InitAlgorithm(CSelfAlgParam* p_pAlgParam, const AlgCallback& al
     bool isload = temp_paramgr.jsonload(filepath);
     if(!isload)
     {
-        LOG(ERROR) << "DOWNLOAD fusion_param.json FAILED!!!";
+        LOG(ERROR) << "LOAD fusion_param.json FAILED!!!";
     }
     bool flag = temp_paramgr.get(temp_param);
     if(!flag)
     {
         LOG(ERROR) << "GET fusion_param FAILED!!!";
     }
-    m_stSelfFuTrAlgParam.m_fusion_parameter = temp_param;
+    m_stSelfFusionAlgParam.m_fusion_parameter = temp_param;
 
     // 4.初始化
     FuTrdata = std::make_shared<ICommonData>();
     p_CompositeAlgs->setCommonData(FuTrdata);
-    p_CompositeAlgs->init(&m_stSelfFuTrAlgParam);
+    p_CompositeAlgs->init(&m_stSelfFusionAlgParam);
     FuTrdata = p_CompositeAlgs->getCommonData();
 
     if(m_pRunThread)
@@ -60,33 +60,36 @@ bool CFusionAlg::InitAlgorithm(CSelfAlgParam* p_pAlgParam, const AlgCallback& al
         m_pRunThread.reset();
     }
 
-    m_pRunThread = std::make_unique<std::thread>(&CFusionAlg::RunFusionTrack, this);
+    m_pRunThread = std::make_unique<std::thread>(&CFusionAlg::RunFusion, this);
     startTime = std::chrono::steady_clock::now();
     LOG(INFO) << "CFusionAlg::InitAlgorithm ---- End >>> Succeeded";
     return true;
 }
 
-void CFusionAlg::RunFusionTrack()
+void CFusionAlg::RunFusion()
 {
     while (1)
-    {
-        std::shared_ptr<CAlgResult> l_pFusionTrackSrcdata;
-        if(!m_dqAlgResultQueue.PopFront(l_pFusionTrackSrcdata, 100))
+    {   
+        // 1. 获取融合数据
+        std::shared_ptr<CAlgResult> l_pFusionSrcdata;
+        if(!m_dqAlgResultQueue.PopFront(l_pFusionSrcdata, 100))
         {
             continue;
         }
-        LOG(INFO) << "CFusionAlg::RunFusionTrack ---- status : start.";
-        FuTrdata->FuTrAlgdata = *l_pFusionTrackSrcdata;
+        LOG(INFO) << "CFusionAlg::RunFusion ---- status : start.";
+
+        // 2. 将融合原始数据传输至融合算法内部
+        FuTrdata->FuTrAlgdata = *l_pFusionSrcdata;
         p_CompositeAlgs->setCommonData(FuTrdata);
 
         auto t_start = std::chrono::high_resolution_clock::now();
         m_stFuTrAlgResult.mapTimeStamp()[TIMESTAMP_FUSION_ALG_BEGIN] = t_start.time_since_epoch().count()/1000000;
 
         try{
-            // 2. 融合算法执行
+            // 3.1. 融合算法执行
             p_CompositeAlgs->execute();
 
-            // 3. 融合跟踪算法处理结果获取
+            // 3.2 融合跟踪算法处理结果获取
             m_stFuTrAlgResult = p_CompositeAlgs->getCommonData()->FuTrAlgdata;
         }
         catch(const std::exception & e){
@@ -127,26 +130,33 @@ void CFusionAlg::RunAlgorithm(void* p_pSrcData)
     }
 
     // 1. 融合输入数据
-    CAlgResult l_pFuTrAlgSrcdata = *(static_cast<CAlgResult *>(p_pSrcData));
+    CAlgResult l_pFuAlgSrcdata = *(static_cast<CAlgResult *>(p_pSrcData));
 
-    for (int t = 0; t < l_pFuTrAlgSrcdata.vecFrameResult().size(); t++)
+    for (int t = 0; t < l_pFuAlgSrcdata.vecFrameResult().size(); t++)
     {
-        if(l_pFuTrAlgSrcdata.vecFrameResult()[t].eDataType() == DATA_TYPE_PC_RESULT)
+        if(l_pFuAlgSrcdata.vecFrameResult()[t].eDataType() == DATA_TYPE_PC_RESULT)      // 点云数据
         {
-            nowpc_timestamp = l_pFuTrAlgSrcdata.vecFrameResult()[t].mapTimeStamp()[TIMESTAMP_PCSRCINFO_SUB];
+            nowpc_timestamp = l_pFuAlgSrcdata.vecFrameResult()[t].mapTimeStamp()[TIMESTAMP_PCSRCINFO_SUB];
         }
-        else if(l_pFuTrAlgSrcdata.vecFrameResult()[t].eDataType() == DATA_TYPE_VIDEO_RESULT)
+        else if(l_pFuAlgSrcdata.vecFrameResult()[t].eDataType() == DATA_TYPE_VIDEO_RESULT)  // 视频数据
         {
-            nowvideo_timestamp = l_pFuTrAlgSrcdata.vecFrameResult()[t].mapTimeStamp()[TIMESTAMP_PCSRCINFO_SUB];
+            nowvideo_timestamp = l_pFuAlgSrcdata.vecFrameResult()[t].mapTimeStamp()[TIMESTAMP_PCSRCINFO_SUB];
         }
     }
-    now_timestamp = nowpc_timestamp;
-    if(nowpc_timestamp == lastpc_timestamp){
+    
+    // 2. 更新时间戳信息
+    if(nowpc_timestamp == lastpc_timestamp){        
         now_timestamp = nowvideo_timestamp;
         LOG(INFO) << "<<<<<<ONLY VIDEO DATA>>>>>>";
     }
+    else
+    {
+        now_timestamp = nowpc_timestamp;
+    }
     lastpc_timestamp = nowpc_timestamp;
-    dt = float(now_timestamp - last_timestamp) / 1000;
+
+    // 3. 计算帧间时间差
+    dt = float(now_timestamp - last_timestamp) / 1000;  
     if(dt <= 0)
     {
         LOG(ERROR) << "<<<<<<dt ERROR>>>>>>dt:" << dt << " last_timestamp: " << last_timestamp << " now_timestamp: " << now_timestamp;
@@ -154,9 +164,12 @@ void CFusionAlg::RunAlgorithm(void* p_pSrcData)
         return;
     }
     last_timestamp = now_timestamp;
-    m_dqAlgResultQueue.PushBack(std::make_shared<CAlgResult>(l_pFuTrAlgSrcdata));
+
+    // 4. 融合原始数据添加至安全队列
+    m_dqAlgResultQueue.PushBack(std::make_shared<CAlgResult>(l_pFuAlgSrcdata));
     inputFrameCount ++;
 
+    // 5. 统计帧率
     auto currentTime = std::chrono::steady_clock::now();
     auto lastTime = std::chrono::duration_cast<std::chrono::seconds>(currentTime - startTime).count();
     if(lastTime >= frameRateInterval)

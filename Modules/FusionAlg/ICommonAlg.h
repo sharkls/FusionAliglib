@@ -16,7 +16,7 @@ class ICommonData{
     ~ICommonData() = default;
 
   public:
-    // FusionTracking
+    // Fusion
     CAlgResult FuTrAlgdata;
     std::vector<xt::xarray<float>> m_vecVideoXarrayResult;
     xt::xarray<float> m_fPcXarrayResult;

@@ -133,7 +133,6 @@ void read_pc_data(const std::string & data_path, CPcSrcData& l_stPcSrcData)
     in.close();
 }
 
-
 namespace ops{
     inline long getTimeStamp()
     {
@@ -449,34 +448,32 @@ bool jsonload(nlohmann::json &json_data, std::string filepath)
 
 void read_fusiondata(const std::string & data_path, int i, int cam_num, CAlgResult& l_FuTrSrcData, CSelfAlgParam *&l_stFuAlgParam)
 {
-    //Read Outline Video Data
-    CFrameResult l_stFuSrcData_vedio;
-    l_stFuSrcData_vedio.unFrameId(i);
-    // cam_num = 4;
+    // Read Outline Video Data
+    CFrameResult l_stFuSrcData_video;
+    l_stFuSrcData_video.unFrameId(i);   // 帧号
 
     char frameNum[7];
     snprintf(frameNum, sizeof(frameNum), "%06d", i);
 
-    for (int j = 0; j < cam_num; j++) //cam_num = 3
+    // Iterate through camera detection data one by one
+    for (int j = 0; j < cam_num; j++) 
     {
-        //read vedio detection results
         auto video_path = data_path + "VideoBox_Channel" + std::to_string(j) + "/Frame_" + frameNum + ".npy" ;
         std::cout << "read video_path:" << video_path << std::endl;
+
+        // Check if the file path exists
         char * cf = const_cast<char *>(video_path.c_str());
         struct stat sb;
-
-        if (stat(cf, &sb) !=0)
+        if (stat(cf, &sb) != 0)
         {
             std::cout<<video_path<<"file does not exist"<<endl;
             return;
         }
 
+        // Load video data and push to CAlgResult instance
         xt::xarray<double> video_src_data = xt::load_npy<double>(video_path);
-
-        // Push video results to CAlgResult instance
         CObjectResult videoSrcResult;
-        l_stFuSrcData_vedio.tCameraSupplement().ucCameraId(j + 1);
-
+        l_stFuSrcData_video.tCameraSupplement().ucCameraId(j + 1);  // 相机id
         for (int k = 0; k < video_src_data.shape(0); k++)
         {
             CObjectResult m_videobox;
@@ -491,23 +488,24 @@ void read_fusiondata(const std::string & data_path, int i, int cam_num, CAlgResu
             m_videobox.sSpeed(video_src_data(k, 8));
             m_videobox.usTargetId(video_src_data(k, 9));
             m_videobox.fVideoConfidence(int(video_src_data(k, 10) * 100));
-            m_videobox.fTopLeftX(video_src_data(k, 11)) ;
+            m_videobox.fTopLeftX(video_src_data(k, 11)) ;       // 左上
             m_videobox.fTopLeftY(video_src_data(k, 12)) ;
-            m_videobox.fBottomRightX(video_src_data(k, 13));
+            m_videobox.fBottomRightX(video_src_data(k, 13));    // 右下
             m_videobox.fBottomRightY(video_src_data(k, 14));
-            // m_videobox.sChannel
             m_videobox.ucSource(video_src_data(k, 15));
-
-            l_stFuSrcData_vedio.vecObjectResult().push_back(m_videobox);
+            // Add target information to CObjResult instance
+            l_stFuSrcData_video.vecObjectResult().push_back(m_videobox);
         }
-        l_stFuSrcData_vedio.eDataType() = DATA_TYPE_VIDEO_RESULT;
-        l_stFuSrcData_vedio.mapTimeStamp()[TIMESTAMP_PCSRCINFO_SUB] = timestamp;
-        timestamp = timestamp + 100;
+        // Add timestamp information and data type information
+        l_stFuSrcData_video.eDataType() = DATA_TYPE_VIDEO_RESULT;
+        l_stFuSrcData_video.mapTimeStamp()[TIMESTAMP_PCSRCINFO_SUB] = timestamp;
 
-         l_FuTrSrcData.vecFrameResult().push_back(l_stFuSrcData_vedio);
+        // Push to CAlgResult instance
+        l_FuTrSrcData.vecFrameResult().push_back(l_stFuSrcData_video);
 
+        // Testing requirements
         CAlgResult PrintVideoFrame;
-        PrintVideoFrame.vecFrameResult().push_back(l_stFuSrcData_vedio);
+        PrintVideoFrame.vecFrameResult().push_back(l_stFuSrcData_video);
         // save_fusion_result_to_csv(data_path +"VideoBox_Channel" + std::to_string(j) +"_csv/", PrintVideoFrame);
     }
 
@@ -517,34 +515,34 @@ void read_fusiondata(const std::string & data_path, int i, int cam_num, CAlgResu
 
     CFrameResult l_stFuSrcData_pc;
     l_stFuSrcData_pc.unFrameId(i);
-
     for (int j = 0; j < pc_src_data.shape(0); j++)
     {
         CObjectResult pcbox;
-        pcbox.sXCoord(int(pc_src_data(j, 0) * 100));
+        pcbox.sXCoord(int(pc_src_data(j, 0) * 100));        // 单位cm 
         pcbox.sYCoord(int(pc_src_data(j, 1) * 100));
         pcbox.sZCoord(int(pc_src_data(j, 2) * 100));
         pcbox.usWidth(int(pc_src_data(j, 3) * 100));
         pcbox.usLength(int(pc_src_data(j, 4) * 100));
         pcbox.usHeight(int(pc_src_data(j, 5) * 100));
-
         pcbox.sCourseAngle(pc_src_data(j, 6));
         pcbox.strClass(l_stFuAlgParam->m_fusion_parameter["fusion_param"]["m_strPcClass"][int(pc_src_data(j,7))]);
         pcbox.fPcConfidence(int(pc_src_data(j,8) * 100));
         pcbox.sSpeed(pc_src_data(j,9));
         pcbox.usTargetId(pc_src_data(j,10));
         pcbox.ucSource(pc_src_data(j,11));
+        // 添加点云目标信息到CObjResult实例中
         l_stFuSrcData_pc.vecObjectResult().push_back(pcbox);
-
     }
+    // 经纬度和雷达的北向夹角可以暂时不提供
     l_stFuSrcData_pc.tLidarSupplement().dLidarLon(l_stFuAlgParam->m_tLidarParam.vecLidarDev()[0].dLidarLon());
     l_stFuSrcData_pc.tLidarSupplement().dLidarLat(l_stFuAlgParam->m_tLidarParam.vecLidarDev()[0].dLidarLat());
     l_stFuSrcData_pc.tLidarSupplement().fLidarNorthAngle(l_stFuAlgParam->m_tLidarParam.vecLidarDev()[0].fLidarNorthAngle());
     l_stFuSrcData_pc.mapTimeStamp()[TIMESTAMP_PCSRCINFO_SUB] = timestamp;
     l_stFuSrcData_pc.eDataType(DATA_TYPE_PC_RESULT) ;
-
+    // 添加当前点云帧所有目标信息到CAlgResult实例中
     l_FuTrSrcData.vecFrameResult().push_back(l_stFuSrcData_pc);
 
+    // Testing requirements
     CAlgResult PrintPcFram; //
     PrintPcFram.vecFrameResult().push_back(l_stFuSrcData_pc);
     // save_fusion_result_to_csv(data_path + "PcBox_csv/", PrintPcFram);
@@ -661,32 +659,32 @@ int testFusion()
         l_stFuAlgParam->m_tCameraParam.vecCameraDev()[i].vecDistMatrix().push_back(camera_param_dis[i][4]);
     }
     
+    // 加载配置文件参数
     std::string filepath1 = rootPath + "Output/Configs/Alg/fusion/fusion_param.json";
     nlohmann::json temp_param1;
     bool isload = jsonload(temp_param1, filepath1);
     l_stFuAlgParam->m_fusion_parameter = temp_param1;
     l_stFuAlgParam->m_strRootPath = "/data/AlgLib/Output";
-    l_pObj->InitAlgorithm(l_stFuAlgParam, fusionAlg_CallBack, nullptr );
+    l_pObj->InitAlgorithm(l_stFuAlgParam, fusionAlg_CallBack, nullptr);
 
+    // 加载测试数据
     for(int i = 278; i < 378; ++i) //i = the frame index
     {
         std::cout<<"Processing Frame: ("<<std::to_string(i)<<")  started."<<endl;
-
-        CAlgResult *p_pSrcData = new CAlgResult();
-        read_fusiondata(rootPath + "data/fusion_test_data/" , i, cam_num, *p_pSrcData, l_stFuAlgParam);
+        CAlgResult *l_pSrcData = new CAlgResult();
+        read_fusiondata(rootPath + "data/fusion_test_data/" , i, cam_num, *l_pSrcData, l_stFuAlgParam);
         auto t_start = std::chrono::steady_clock::now();
 
-        if (p_pSrcData->vecFrameResult().size() > 0)
+        if (l_pSrcData->vecFrameResult().size() > 0)
         {
-            l_pObj->RunAlgorithm(p_pSrcData);
+            l_pObj->RunAlgorithm(l_pSrcData);
             timestamp = timestamp + 100;
             auto t_end = std::chrono::steady_clock::now();
             double latency = std::chrono::duration<double, std::milli>(t_end - t_start).count();
         }
         usleep(1000*100);
-        delete p_pSrcData;
+        delete l_pSrcData;
     }
-
 
     delete l_pObj;
     delete l_stFuAlgParam;

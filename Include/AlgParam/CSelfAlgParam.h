@@ -38,9 +38,9 @@ struct CSelfAlgParam
 	bool 						m_bFusion;				//是否融合   
     uint16_t            		m_unFusionWaitTime;     //最长等待时间
 
-	//融合跟踪算法参数
-	std::string 				m_strFuTrCfgPath;					//融合跟踪权重路径配置文件
-	std::string 				m_strCameraReflectLimitFilePath;	//融合跟踪权重路径配置文件
+	//融合算法参数
+	std::string 				m_strFuTrCfgPath;					//融合权重路径配置文件
+	std::string 				m_strCameraReflectLimitFilePath;	//融合权重路径配置文件
 	std::string 	    		m_strFusionCfgPath;					//算法配置文件相对路径
 	int							m_CameraId;	
 	std::string 				m_strFusionConfPath;              

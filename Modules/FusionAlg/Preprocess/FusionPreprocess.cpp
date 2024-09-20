@@ -5,7 +5,7 @@ namespace fs = std::experimental::filesystem;
 
 CFusionPreprocess::CFusionPreprocess()
 {
-    LOG(INFO) << "Fusion_Tracking data preprocessing status :   start.";
+    LOG(INFO) << "Fusion data preprocessing status :   start.";
 }
 
 CFusionPreprocess::~CFusionPreprocess()
@@ -29,9 +29,9 @@ void CFusionPreprocess::execute()
 
     // 1. 融合预处理数据获取
     CAlgResult p_pSrcData = static_cast<CAlgResult>(getCommonData()->FuTrAlgdata);
-    if (p_pSrcData.vecFrameResult().size() < 1)             // 核验融合跟踪数据的合法性
+    if (p_pSrcData.vecFrameResult().size() < 1)   // 核验融合数据的合法性
     {
-        LOG(ERROR) << " CFusionPreprocess::execute Error : FusionTrack data is empty.";
+        LOG(ERROR) << " CFusionPreprocess::execute Error : Fusion data is empty.";
     }
 
     // 2. 预处理输出数据初始化
@@ -44,27 +44,28 @@ void CFusionPreprocess::execute()
     {
         LOG(INFO) << " p_pSrcData.vecFrameResult()[i].eDataType() : " << (int)p_pSrcData.vecFrameResult()[i].eDataType();
 
+        // 3.1 融合原始数据保存
         if(p_PreFuTrAlgParam.m_fusion_parameter["fusion_param"]["save_raw_data"])
         {
             std::string l_sOutPutPath = p_PreFuTrAlgParam.m_strRootPath + "/SaveData/";
             save_input_to_npy(l_sOutPutPath,  p_pSrcData);
         }
 
-        // 3.1 点云获取数据转换
+        // 3.2 点云获取数据转换
         if (p_pSrcData.vecFrameResult()[i].eDataType() == DATA_TYPE_PC_RESULT)       //3=点云类型
         {
             pc = PcAlgResTransfer(& p_pSrcData.vecFrameResult()[i]);
         }
-            // 3.2 图像获取数据转换
+        // 3.3 图像获取数据转换
         else if (p_pSrcData.vecFrameResult()[i].eDataType() == DATA_TYPE_VIDEO_RESULT)  // 6=视频类型
         {
             _camera_num ++;
             xt::xarray<float> video;
 
-            // 3.2.1 图像数据转换
+            // 3.3.1 图像数据转换
             video = VideoAlgResTransfer(& p_pSrcData.vecFrameResult()[i], _camera_num);
 
-            // 3.2.2 根据相机反映射配置，对相机检测目标进行过滤
+            // 3.3.2 根据相机反映射配置，对相机检测目标进行过滤
             auto col = xt::view(video, xt::all(), 10);
             col = xt::where(col >= 1.0, 0.98, col);
             auto filter_box_x_index = xt::where(xt::col(video, 0) < 0.001f && xt::col(video, 0) >= 0.0f)[0];
@@ -110,6 +111,8 @@ xt::xarray<float> CFusionPreprocess::PcAlgResTransfer(CFrameResult *p_pPcResult)
     }
     return lidar_box;
 }
+
+
 
 xt::xarray<float> CFusionPreprocess::VideoAlgResTransfer(CFrameResult *p_pVideoResult, int channel)
 {

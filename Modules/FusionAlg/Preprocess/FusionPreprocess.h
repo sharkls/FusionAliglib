@@ -14,6 +14,7 @@
 #include <xtensor/xtensor.hpp>
 #include "xtensor/xview.hpp"
 #include "xtensor/xarray.hpp"
+
 #include "ICommonAlg.h"
 #include "CSelfAlgParam.h"
 #include "GlobalContext.h"
@@ -21,27 +22,31 @@
 
 using namespace std;
 
-class CFusionPreprocess : public ICommonAlg{ // ,IFusionAlg{
+class CFusionPreprocess : public ICommonAlg{
     public:
         CFusionPreprocess();
+
         virtual ~CFusionPreprocess();
 
         void init(CSelfAlgParam* p_pAlgParam );
+
         void execute();
 
+        // 数据写入
         void setCommonData(CCommonDataPtr p_commonData) override
         {
             m_CommonData = p_commonData;
         }
-
+        // 数据获取
         CCommonDataPtr getCommonData() override
         {
             return m_CommonData;
         }
 
     private:
+        // 点云检测结果转换
         xt::xarray<float> PcAlgResTransfer(CFrameResult *p_pPcResult);
-
+        // 视频检测结果转换
         xt::xarray<float> VideoAlgResTransfer(CFrameResult *p_pVideoResult, int channel);
 
         int PcClass2label( std::string &p_strClass, nlohmann::json fusion_parameter);
@@ -52,7 +57,7 @@ class CFusionPreprocess : public ICommonAlg{ // ,IFusionAlg{
 
         // private parameters
         xt::xarray<int> m_camera_reflect_limit;     // 相机反映射限制
-        CSelfAlgParam  p_PreFuTrAlgParam;           // 融合跟踪预处理参数
+        CSelfAlgParam  p_PreFuTrAlgParam;           // 融合预处理参数
         CCommonDataPtr m_CommonData;
 
 };
