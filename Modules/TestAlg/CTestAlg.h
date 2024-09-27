@@ -29,38 +29,30 @@ class CTestAlg :public ITestAlg
 {
 public:
     CTestAlg(const std::string& p_strExePath);
-    virtual ~CTestAlg();
 
-    //设置初始化以及执行算法需要的各类参数，成功返回true，失败返回false
-    // virtual bool  SetAlgParam(const CSelfVideoAlgParam* p_pAlgParam) override;
+    virtual ~CTestAlg();
 
     //初始化算法接口对象，内部主要处理只需初始化一次的操作，比如模型加载之类的，成功返回true，失败返回false
     bool InitAlgorithm(CSelfAlgParam* p_pAlgParam, const AlgCallback & alg_cb, void * hd);
 
-    //执行算法函数，传入原始数据体，算法执行成功返回处理后的数据或者检测结果（由算法类型而定），失败返回nullptr
-    //参数1：数据源，目前约定传入 TPcSrcData* 类型数据 
-    //参数2：点云算法类型，默认 PC_DETECT_AND_TRACK
-    //返回值：算法处理后的数据空间地址，根据算法类型不同有些差异，具体如下：
-    //PC_PRETREATMENT类型：返回 TPcSrcData* 类型数据 
-    //PC_DETECT类型：返回 TPcResult* 类型数据 
-    //PC_DETECT_AND_TRACK类型：返回 TPcResult* 类型数据 
+    //执行算法函数，传入原始数据体，算法执行成功通过回调函数将结果返回    
     void RunAlgorithm(void* p_pSrcData);
 
     std::string	GetVersion();
+
     int64_t GetTimeStamp();
 
     //  回调函数
     AlgCallback test_callback;
     void *test_hd;
 
-    
     IMakeAlgPtr p_makeAlgs;
     CCompositeAlgsPtr p_CompositeAlgs;
     
-    std::string m_strOutPath;
-    CAlgResult m_stTestAlgResult;
-    CSelfAlgParam m_stSelfTestAlgParam;
+    std::string m_strOutPath;               // Output路径（构造时根据该路径下的配置文件进行构建）
+    CAlgResult m_stTestAlgResult;           // 回调函数返回数据
+    CSelfAlgParam m_stSelfTestAlgParam;     // 测试算法参数
 
     CVideoSrcDataTimematch l_pTestSrcData;
-    CCommonDataPtr test_Srcdata;
+    // CCommonDataPtr test_Srcdata;
 };

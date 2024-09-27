@@ -19,7 +19,7 @@ int64_t CTestAlg::GetTimeStamp()
 
 std::string	CTestAlg::GetVersion()
 {
-    return "AlgLib VideoAlg V1.3";
+    return "AlgLib TestAlg V1.3";
 }
 
 /**
@@ -105,21 +105,19 @@ void CTestAlg::RunAlgorithm(void* p_pSrcData)
 
     // 2. 数据传输至算法内部
     CCommonDataPtr CommonData = std::make_shared<ICommonData>();
-    // CommonData->VideoStartTime = VideoSubTimeStamp;
-    CommonData->img_SrcData = l_pTestSrcData;
+    CommonData->TestStartTime = TestSubTimeStamp;
     p_CompositeAlgs->setCommonAllData(CommonData);
-
+ 
     // 3.执行算法操作
     p_CompositeAlgs->execute();
 
     // 4.对算法输出结果进行处理
-    m_stTestAlgResult = static_cast<CAlgResult> (CommonData->videoAlgResult);
+    int64_t TestAlgResult = CommonData->TestStartTime;
+    LOG(INFO) <<"RunAlgorithm ---- End >>> Number of Variable Operations : " << TestAlgResult - TestSubTimeStamp << " ms." << std::endl;
     
     // 5.图像感知结果信息设置
     int64_t TestResultPubTimeStamp = GetTimeStamp();       
     auto latency_all = TestResultPubTimeStamp - TestSubTimeStamp;     // 图像检测算法耗时
-
-    
     LOG(INFO) <<"RunAlgorithm ---- End >>> All Time : " << latency_all << " ms." << std::endl;
     
     // 5. 通过回调函数返回结果

@@ -351,14 +351,13 @@ void test_cb(const CAlgResult& ms, void* hd)
 
 void test()
 {
-    std::string img_path = "/share/FusionAliglib/data/video_data/";
+    std::string img_path = "/share/Code/FusionAliglib/data/video_data/";
     //算法接口调用流程基本如下：
-    ITestAlg* l_pObj = CreateTestAlgObj("/share/FusionAliglib/Output");
+    ITestAlg* l_pObj = CreateTestAlgObj("/share/Code/FusionAliglib/Output");
     //准备算法参数
     CSelfAlgParam *l_stTestAlgParam = new CSelfAlgParam();
-    l_stTestAlgParam->m_strRootPath = "/share/FusionAliglib/Output";
+    l_stTestAlgParam->m_strRootPath = "/share/Code/FusionAliglib/Output";
     l_stTestAlgParam->m_strTestCfgPath = "/Configs/Alg/test/test.yaml";
-
 
     // 初始化算法接口对象
     l_pObj->InitAlgorithm(l_stTestAlgParam,  test_cb, nullptr);
@@ -698,7 +697,7 @@ int testFusion()
 int main(int argc, char* argv[])
 {
     // testVideo();
-    // test();
-    testFusion();
+    test();
+    // testFusion();
     return 0;
 }

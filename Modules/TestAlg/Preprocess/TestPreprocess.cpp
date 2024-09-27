@@ -21,9 +21,9 @@ TestPreProcess::~TestPreProcess()
 };
 
 /**
- * 初始化图像后处理部分参数
+ * 初始化后处理部分参数
  * 参数：
- *   p_pAlgParam - 触发算法参数
+ *   p_pAlgParam - 算法参数
  * 功能：
  *   初始化TestPreProcess对象的算法参数
  */
@@ -38,19 +38,22 @@ void TestPreProcess::init(CSelfAlgParam* p_pAlgParam)
 }
 
 /**
- * 执行图像后处理
+ * 执行后处理
  * 功能：
- *   获取输入数据，执行后处理逻辑，并设置卡口输出数据
+ *   获取输入数据，执行后处理逻辑，并设置输出数据
  */
 void TestPreProcess::execute(){
 
     LOG(INFO)<< "TestPreProcess::execute status: start."<<std::endl;
 
     // 输入数据获取
-    // TestPreProcessResult = static_cast<CAlgResult *>(getCommonData()->trigger_result);
+    int64_t TimeStamp = getCommonData()->TestStartTime;
+
+    // 数据处理
+    TimeStamp++;
 
     // 输出数据设置
-    // m_CommonData->trigger_result = TestPreProcessResult;
+    m_CommonData->TestStartTime = TimeStamp;
 
 
     LOG(INFO)<< "TestPreProcess::execute status : finish! " <<std::endl;

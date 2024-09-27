@@ -12,7 +12,7 @@ VIDEO_ALG:
   POST_ISVALID: True
   POST_ALG: "video_post_1"
 
-  # 测试算法选择
+# 测试算法选择
 TEST_ALG:
   # 预处理算法
   PRE_ISVALID: True

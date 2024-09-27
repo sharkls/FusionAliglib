@@ -1,7 +1,7 @@
 /*******************************************************
  文件名：TestProcessing.h
  作者：
- 描述：触发算法接口实现，用于触发算法预处理的运行及结果数据处理
+ 描述：算法接口实现，用于算法预处理的运行及结果数据处理
  版本：v1.0
  日期：2024-1-11
  *******************************************************/
@@ -24,13 +24,12 @@ public:
 
     virtual ~TestProcessing();
 
-    // 初始化视频检测预处理部分中参数
+    // 初始化预处理部分中参数
     void init(CSelfAlgParam* p_pAlgParam);
 
-    // 执行视频检测后处理算法
+    // 执行后处理算法
     void execute();
 
-    
     void setCommonData(CCommonDataPtr p_commonData) override
     {
         m_CommonData = p_commonData;
@@ -42,6 +41,6 @@ public:
     }
 
 private:
-    CAlgResult * TestProcessingResult;
+    // CAlgResult * TestProcessingResult;
 };
 
