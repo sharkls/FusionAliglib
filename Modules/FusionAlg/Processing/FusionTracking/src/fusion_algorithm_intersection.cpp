@@ -20,11 +20,11 @@ void Fusion_Algorithm_Intersection::init(CSelfAlgParam *p_pAlgParam)
     pcWait = m_AlgParams.m_fusion_parameter["fusion_param"]["PcWaitFrame"];
     pcLast = m_AlgParams.m_fusion_parameter["fusion_param"]["PcLastFrame"];
     // 加载车道角
-    std::pair<float [2], float [2]> limit = FusionFunction::load_chedao(m_chedao);
-    m_xlimit[0] = limit.first[0];
-    m_xlimit[1] = limit.first[1];
-    m_ylimit[0] = limit.second[0];
-    m_ylimit[1] = limit.second[1];
+    // std::pair<float [2], float [2]> limit = FusionFunction::load_chedao(m_chedao);
+    // m_xlimit[0] = limit.first[0];
+    // m_xlimit[1] = limit.first[1];
+    // m_ylimit[0] = limit.second[0];
+    // m_ylimit[1] = limit.second[1];
 
     m_match_out = make_shared<fusion_match_out>();
     m_cal_dis_result = make_shared<cal_dis_result>();

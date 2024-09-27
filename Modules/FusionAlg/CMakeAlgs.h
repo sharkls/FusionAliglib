@@ -16,12 +16,12 @@ public:
     {
         // 读取配置文件中点云算法选择参数
         YAML::Node futr_cfg = YAML::LoadFile(p_sfileName);
-        b_preIsValid = futr_cfg["FUSION_TRACKING_ALG"]["PRE_ISVALID"].as<bool>();
-        b_infIsValid = futr_cfg["FUSION_TRACKING_ALG"]["PROCESSING_ISVALID"].as<bool>();
-        b_postIsValid = futr_cfg["FUSION_TRACKING_ALG"]["POST_ISVALID"].as<bool>();
-        m_preName = futr_cfg["FUSION_TRACKING_ALG"]["PRE_ALG"].as<std::string>();
-        m_infName = futr_cfg["FUSION_TRACKING_ALG"]["PROCESSING_ALG"].as<std::string>();
-        m_postName = futr_cfg["FUSION_TRACKING_ALG"]["POST_ALG"].as<std::string>();
+        b_preIsValid = futr_cfg["FUSION_ALG"]["PRE_ISVALID"].as<bool>();
+        b_infIsValid = futr_cfg["FUSION_ALG"]["PROCESSING_ISVALID"].as<bool>();
+        b_postIsValid = futr_cfg["FUSION_ALG"]["POST_ISVALID"].as<bool>();
+        m_preName = futr_cfg["FUSION_ALG"]["PRE_ALG"].as<std::string>();
+        m_infName = futr_cfg["FUSION_ALG"]["PROCESSING_ALG"].as<std::string>();
+        m_postName = futr_cfg["FUSION_ALG"]["POST_ALG"].as<std::string>();
     };
 
     ~CMakeFuTrAlgs_strategy() = default;
@@ -74,13 +74,13 @@ private:
 
     //各模块中对应算法
     std::map<std::string, ICommonAlgPtr> m_mapPreAlgsLibs = {
-                                                            {"Detection_resault_transfer", std::make_shared<CFusionPreprocess>()},
+                                                            {"Detection_Resault_Transfer", std::make_shared<CFusionPreprocess>()},
                                                             };
     std::map<std::string, ICommonAlgPtr> m_mapInfAlgsLibs = {
-                                                            {"intersection", std::make_shared<Fusion_Algorithm_Intersection>()},
+                                                            {"Intersection", std::make_shared<Fusion_Algorithm_Intersection>()},
                                                             };
     std::map<std::string, ICommonAlgPtr> m_mapPostAlgsLibs = {
-                                                            {"FuTrPost", std::make_shared<CFusionPostprocess>()},
+                                                            {"FusionPost", std::make_shared<CFusionPostprocess>()},
                                                             };
 };
 

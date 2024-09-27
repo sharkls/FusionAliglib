@@ -1,5 +1,4 @@
 {
-    // 需要融合的模态数据
     "Fusion_Video"	:1,         
     "Fusion_Lidar"	:1,
     "Fusion_Radar"	:0,

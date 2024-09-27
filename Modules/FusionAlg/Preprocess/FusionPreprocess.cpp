@@ -1,5 +1,5 @@
 #include "FusionPreprocess.h"
-#include "Log/glog/logging.h"
+
 
 namespace fs = std::experimental::filesystem;
 
@@ -19,6 +19,16 @@ void CFusionPreprocess::init(CSelfAlgParam* p_pAlgParam)
 
     // 1. 预处理参数获取
     p_PreFuTrAlgParam = *(static_cast<CSelfAlgParam *>(p_pAlgParam));
+
+    // 2.加载配置文件路径
+    cam_num_ = p_PreFuTrAlgParam.m_tCameraParam.unCameraCount();
+    m_CameraParam = p_PreFuTrAlgParam.m_tCameraParam;
+    img_Width = p_PreFuTrAlgParam.m_fusion_parameter["fusion_param"]["camera_raw_size"][0];
+    img_High = p_PreFuTrAlgParam.m_fusion_parameter["fusion_param"]["camera_raw_size"][1];
+    // m_vecCameraMatrix =  p_PreFuTrAlgParam.m_tCameraParam.vecCameraDev().vecInParameter();
+    // m_vecDistCoeffs = p_PreFuTrAlgParam.m_tCameraParam.vecDistMatrix();
+    // m_vecRotation = p_PreFuTrAlgParam.m_tCameraParam.vecRotateMatrix();
+    // m_vecTranslation = p_PreFuTrAlgParam.m_tCameraParam.vecTranslationMatrix();
     LOG(INFO) << "CFusionPreprocess::init status :   finish!";
 }
 
@@ -35,8 +45,8 @@ void CFusionPreprocess::execute()
     }
 
     // 2. 预处理输出数据初始化
-    xt::xarray<float> pc;
-    std::vector<xt::xarray<float>> vecVideoResult;
+    xt::xarray<float> pcResult;
+    std::vector<xt::xarray<float>> vecPctoVideoResult;
 
     // 3. 遍历所有帧数据，构建点云结果数据和图像结果数据
     int _camera_num = 0;
@@ -54,7 +64,7 @@ void CFusionPreprocess::execute()
         // 3.2 点云获取数据转换
         if (p_pSrcData.vecFrameResult()[i].eDataType() == DATA_TYPE_PC_RESULT)       //3=点云类型
         {
-            pc = PcAlgResTransfer(& p_pSrcData.vecFrameResult()[i]);
+            PcAlgResTransfer(&p_pSrcData.vecFrameResult()[i], pcResult);
         }
         // 3.3 图像获取数据转换
         else if (p_pSrcData.vecFrameResult()[i].eDataType() == DATA_TYPE_VIDEO_RESULT)  // 6=视频类型
@@ -70,13 +80,20 @@ void CFusionPreprocess::execute()
             col = xt::where(col >= 1.0, 0.98, col);
             auto filter_box_x_index = xt::where(xt::col(video, 0) < 0.001f && xt::col(video, 0) >= 0.0f)[0];
             video = xt::view(video, xt::drop(filter_box_x_index));
-            vecVideoResult.push_back(video);
+            m_vecVideoResult.push_back(video);
         }
     }
 
+    // 4. （多相机目标与对应点云目标进行Iou匹配）点云投影至相机坐标系下的目标和对应相机目标
+
+    // 获取点云目标框投影至各相机上
+    for(size_t i  = 0; i < cam_num_; i++)
+    {
+        vecPctoVideoResult.push_back(PcToVideoTransform(pcResult, m_vecVideoResult, i));
+    }
     // 4. 融合跟踪预处理数据输出
-    m_CommonData->m_vecVideoXarrayResult = vecVideoResult;
-    m_CommonData->m_fPcXarrayResult = pc;
+    m_CommonData->m_vecVideoXarrayResult = m_vecVideoResult;
+    m_CommonData->m_fPcXarrayResult = pcResult;
     setCommonData(m_CommonData);
     LOG(INFO) << "CFusionPreprocess::execute  status :  finish!";
 
@@ -84,35 +101,32 @@ void CFusionPreprocess::execute()
     auto latency_all = (std::chrono::duration_cast<std::chrono::duration<int, std::micro>>(t_end - t_start).count())/1000;
 }
 
-xt::xarray<float> CFusionPreprocess::PcAlgResTransfer(CFrameResult *p_pPcResult)
+void CFusionPreprocess::PcAlgResTransfer(CFrameResult *p_pPcResult, xt::xarray<float>& PcResult)
 {
     // x,y,w,l,theta(角度),z,h,label,speed, id, score, [x_min,y_min,x_max,y_max,] data_source, [data_channel]
-    xt::xarray<float> lidar_box = xt::zeros<float>({int(p_pPcResult->vecObjectResult().size()), 17});
+    PcResult = xt::zeros<float>({int(p_pPcResult->vecObjectResult().size()), 17});
     LOG(INFO) << "PcAlgResTransfer Lidar Nums: " << p_pPcResult->vecObjectResult().size();
     for (int i = 0; i < int(p_pPcResult->vecObjectResult().size()); i++)
-    {
-        lidar_box(i, 0) = float(p_pPcResult->vecObjectResult()[i].sXCoord()) / 100;         // x
-        lidar_box(i, 1) = float(p_pPcResult->vecObjectResult()[i].sYCoord()) / 100;         // y
-        lidar_box(i, 2) = float(p_pPcResult->vecObjectResult()[i].usWidth()) / 100;         // w
-        lidar_box(i, 3) = float(p_pPcResult->vecObjectResult()[i].usLength()) / 100;        // l
-        lidar_box(i, 4) = float(p_pPcResult->vecObjectResult()[i].sCourseAngle()); //* 180 / PI; // theta
-        lidar_box(i, 5) = float(p_pPcResult->vecObjectResult()[i].sZCoord()) / 100;         // z
-        lidar_box(i, 6) = float(p_pPcResult->vecObjectResult()[i].usHeight()) / 100;        // h
-        lidar_box(i, 7) = PcClass2label(p_pPcResult->vecObjectResult()[i].strClass(), p_PreFuTrAlgParam.m_fusion_parameter);  // label
-        lidar_box(i, 8) = float(p_pPcResult->vecObjectResult()[i].sSpeed());             // speed
-        lidar_box(i, 9) = p_pPcResult->vecObjectResult()[i].usTargetId();                 // id
-        lidar_box(i, 10) = float(p_pPcResult->vecObjectResult()[i].fPcConfidence()) / 100; // score
-        lidar_box(i, 11) = float(-1000);     // x_min
-        lidar_box(i, 12) = float(-1000);     // y_min
-        lidar_box(i, 13) = float(-1000);     // x_max
-        lidar_box(i, 14) = float(-1000);     // y_max
-        lidar_box(i, 15) = float(2);// 2;     // data_source ..ucSource;       // CAlgResult.idl在融合结果中使用，每个目标的来源，0—激光，1—视频，2-毫米波，3—视频和激光融合
-        lidar_box(i, 16) = 0;     // data_channel
+    {   
+        PcResult(i, 0) = float(p_pPcResult->vecObjectResult()[i].sXCoord()) / 100;         // x
+        PcResult(i, 1) = float(p_pPcResult->vecObjectResult()[i].sYCoord()) / 100;         // y
+        PcResult(i, 2) = float(p_pPcResult->vecObjectResult()[i].usWidth()) / 100;         // w
+        PcResult(i, 3) = float(p_pPcResult->vecObjectResult()[i].usLength()) / 100;        // l
+        PcResult(i, 4) = float(p_pPcResult->vecObjectResult()[i].sCourseAngle()); //* 180 / PI; // theta
+        PcResult(i, 5) = float(p_pPcResult->vecObjectResult()[i].sZCoord()) / 100;         // z
+        PcResult(i, 6) = float(p_pPcResult->vecObjectResult()[i].usHeight()) / 100;        // h
+        PcResult(i, 7) = PcClass2label(p_pPcResult->vecObjectResult()[i].strClass(), p_PreFuTrAlgParam.m_fusion_parameter);  // label
+        PcResult(i, 8) = float(p_pPcResult->vecObjectResult()[i].sSpeed());             // speed
+        PcResult(i, 9) = p_pPcResult->vecObjectResult()[i].usTargetId();                 // id
+        PcResult(i, 10) = float(p_pPcResult->vecObjectResult()[i].fPcConfidence()) / 100; // score  
+        PcResult(i, 11) = float(-1000);     // x_min
+        PcResult(i, 12) = float(-1000);     // y_min
+        PcResult(i, 13) = float(-1000);     // x_max
+        PcResult(i, 14) = float(-1000);     // y_max
+        PcResult(i, 15) = float(2);// 2;     // data_source ..ucSource;       // CAlgResult.idl在融合结果中使用，每个目标的来源，0—激光，1—视频，2-毫米波，3—视频和激光融合
+        PcResult(i, 16) = 0;     // data_channel
     }
-    return lidar_box;
 }
-
-
 
 xt::xarray<float> CFusionPreprocess::VideoAlgResTransfer(CFrameResult *p_pVideoResult, int channel)
 {
@@ -239,4 +253,174 @@ void CFusionPreprocess::save_input_to_npy(std::string path, CAlgResult outputAlg
         }
         xt::dump_npy(frameName, all_boxes);
     }
+}
+
+// 新增函数：将雷达目标转换为图像上的二维目标框
+xt::xarray<float> CFusionPreprocess::PcToVideoTransform(xt::xarray<float>& pc, std::vector<xt::xarray<float>> vecVideoResult, size_t index_cam)
+{   
+    size_t num_boxes = pc.shape()[0];
+    // image_boxes = xt::zeros<float>({num_boxes, 4}); // 每个目标框包含4个值：x_min, y_min, x_max, y_max
+
+    // 获取相机内参矩阵K
+    xt::xarray<float> K = xt::adapt(m_CameraParam.vecCameraDev()[index_cam].vecInParameter(), {3, 3});
+
+    // 获取相机旋转矩阵R
+    xt::xarray<float> R = xt::adapt(m_CameraParam.vecCameraDev()[index_cam].vecRotateMatrix(), {3, 3});
+
+    // 获取相机平移向量T
+    xt::xarray<float> T = xt::adapt(m_CameraParam.vecCameraDev()[index_cam].vecTranslationMatrix(), {3, 1});
+
+    // 获取畸变系数
+    std::vector<float> dist_coeffs = m_CameraParam.vecCameraDev()[index_cam].vecDistMatrix();
+
+    // 构建外参矩阵RT
+    xt::xarray<float> RT = xt::hstack(xt::xtuple(R, T));
+
+    for (size_t i = 0; i < num_boxes; ++i)
+    {
+        // 获取目标框的中心坐标和尺寸
+        float x = pc(i, 0);
+        float y = pc(i, 1);
+        float z = pc(i, 5);
+        float w = pc(i, 2);
+        float h = pc(i, 6);
+        float l = pc(i, 3);
+
+        // 计算目标框的八个顶点
+        std::vector<xt::xarray<float>> corners = {
+            {x - w / 2, y - l / 2, z - h / 2, 1.0},
+            {x + w / 2, y - l / 2, z - h / 2, 1.0},
+            {x - w / 2, y + l / 2, z - h / 2, 1.0},
+            {x + w / 2, y + l / 2, z - h / 2, 1.0},
+            {x - w / 2, y - l / 2, z + h / 2, 1.0},
+            {x + w / 2, y - l / 2, z + h / 2, 1.0},
+            {x - w / 2, y + l / 2, z + h / 2, 1.0},
+            {x + w / 2, y + l / 2, z + h / 2, 1.0}
+        };
+
+        float x_min = std::numeric_limits<float>::max();
+        float y_min = std::numeric_limits<float>::max();
+        float x_max = std::numeric_limits<float>::lowest();
+        float y_max = std::numeric_limits<float>::lowest();
+
+        for (const auto& corner : corners)
+        {
+            // 使用相机内外参将三维坐标转换为二维图像坐标
+            xt::xarray<float> point_2d = xt::linalg::dot(K, xt::linalg::dot(RT, corner));
+
+            // 归一化
+            float u = point_2d(0) / point_2d(2);
+            float v = point_2d(1) / point_2d(2);
+
+            // 畸变校正
+            float r2 = u * u + v * v;
+            float r4 = r2 * r2;
+            float r6 = r4 * r2;
+
+            float k1 = dist_coeffs[0];
+            float k2 = dist_coeffs[1];
+            float p1 = dist_coeffs[2];
+            float p2 = dist_coeffs[3];
+            float k3 = dist_coeffs[4];
+
+            float x_distorted = u * (1 + k1 * r2 + k2 * r4 + k3 * r6) + 2 * p1 * u * v + p2 * (r2 + 2 * u * u);
+            float y_distorted = v * (1 + k1 * r2 + k2 * r4 + k3 * r6) + p1 * (r2 + 2 * v * v) + 2 * p2 * u * v;
+
+            // 更新目标框的最小和最大值
+            x_min = std::min(x_min, x_distorted);
+            y_min = std::min(y_min, y_distorted);
+            x_max = std::max(x_max, x_distorted);
+            y_max = std::max(y_max, y_distorted);
+        }
+
+        // 判断目标框是否在图像范围内
+        if (x_max < 0 || x_min > img_Width || y_max < 0 || y_min > img_High)
+        {
+            // 目标框完全不在图像范围内，跳过该目标
+            continue;
+        }
+
+        // 调整目标框的顶点值，使其在图像范围内
+        x_min = std::max(0.0f, x_min);
+        y_min = std::max(0.0f, y_min);
+        x_max = std::min(static_cast<float>(img_Width), x_max);
+        y_max = std::min(static_cast<float>(img_High), y_max);
+
+        // 将调整后的目标框顶点值赋值给video_boxes
+        pc(i, 11) = x_min;
+        pc(i, 12) = y_min;
+        pc(i, 13) = x_max;
+        pc(i, 14) = y_max;
+    }
+
+    // 匹配点云和相机目标，并进行目标信息融合
+    MatchAndFuseTargets(pc, vecVideoResult, index_cam);
+    // LOG(INFO) << "CFusionPreprocess::PcToVideoTransform ---- status : end!";
+    return pc;
+}
+
+void CFusionPreprocess::MatchAndFuseTargets(xt::xarray<float>& pc, std::vector<xt::xarray<float>> vecVideoResult, size_t index_cam)
+{   
+    // LOG(INFO) << "CFusionPreprocess::MatchAndFuseTargets ---- status : start!";
+
+    std::vector<xt::xarray<float>> m_vecNoMatchVideoResult;
+    // 构建匈牙利算法的代价矩阵
+    size_t num_lidar = pc.shape()[0];
+    size_t num_camera = vecVideoResult[index_cam].shape()[0];
+    // xt::xarray<float> cost_matrix({num_lidar, num_camera});
+
+    // 提取点云目标和图像目标的边界框
+    xt::xarray<float> lidar_boxes = xt::view(pc, xt::all(), xt::range(11, 15));
+    xt::xarray<float> camera_boxes = xt::view(vecVideoResult[index_cam], xt::all(), xt::range(11, 15));
+
+    // 调用 iou_jit_new 计算 IoU
+    auto [overlaps, overlaps_new] = FunctionHub::iou_jit_new(lidar_boxes, camera_boxes, 1e-5);
+
+    // 使用 IoU 计算成本矩阵
+    xt::xarray<float> cost_matrix = 1.0f - overlaps;
+
+    // 执行匈牙利算法
+    xt::xarray<int> assignment = run_hungarian_match(cost_matrix);
+
+    // 将匹配上的图像目标检测框信息赋值给点云目标，并将点云目标的data_source改为3
+    std::vector<bool> matched_camera_indices(num_camera, false);
+    for (size_t j = 0; j < assignment.shape(0); ++j)
+    {
+        int lidar_idx = assignment(j, 0);
+        int camera_idx = assignment(j, 1);
+
+        if (camera_idx != -1)
+        {
+            // 复制图像目标检测框信息
+            pc(lidar_idx, 11) = vecVideoResult[index_cam](j, 11);
+            pc(lidar_idx, 12) = vecVideoResult[index_cam](j, 12);
+            pc(lidar_idx, 13) = vecVideoResult[index_cam](j, 13);
+            pc(lidar_idx, 14) = vecVideoResult[index_cam](j, 14);
+
+            if(pc(lidar_idx, 7) != vecVideoResult[index_cam](j, 7))
+            {
+                pc(lidar_idx, 7) = vecVideoResult[index_cam](j, 7);   // 如果不等，用相机类别替换点云目标类别
+            }
+            
+            pc(lidar_idx, 15) = 4;                                      // 目标为融合后的结果
+            matched_camera_indices[camera_idx] = true;
+        }
+    }
+
+    // 保存未匹配上的图像目标
+    std::vector<size_t> unmatched_indices;
+    for(size_t k = 0; k < num_camera; ++k)
+    {
+        if (!matched_camera_indices[k])
+        {
+            unmatched_indices.push_back(k);
+        }
+    }
+
+    if (!unmatched_indices.empty())
+    {
+        xt::xarray<float> no_match_result = xt::view(vecVideoResult[index_cam], xt::keep(unmatched_indices));
+        m_vecNoMatchVideoResult.push_back(no_match_result);
+    }
+    // LOG(INFO) << "CFusionPreprocess::MatchAndFuseTargets ---- status : end!";
 }
