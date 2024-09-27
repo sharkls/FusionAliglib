@@ -1,5 +1,5 @@
 {
-    "Fusion_Video"	:1,         
+    "Fusion_Video"	:0,         
     "Fusion_Lidar"	:1,
     "Fusion_Radar"	:0,
     "Video_Delay_Frame":0,

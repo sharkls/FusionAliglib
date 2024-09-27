@@ -20,6 +20,7 @@ struct TPcPostAlgMatchData
 struct IPcAlg
 {
     IPcAlg(){}
+    
     virtual ~IPcAlg(){}
     
     //初始化算法接口对象，内部主要处理只需初始化一次的操作，比如模型加载之类的，成功返回true，失败返回false

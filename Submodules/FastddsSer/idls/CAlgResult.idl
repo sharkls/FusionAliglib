@@ -49,6 +49,7 @@ struct CObjectResult {
     unsigned short	         usVideoInfo[20]; // 点云目标框相关信息
     unsigned short           usMissFrame;     // 丢失帧数
     unsigned short           usFrame;         // 目标帧号（测试使用）
+    unsigned short           usLidarFrame;    // 目标帧号（测试使用）
 
     // 毫米波特有的结果信息
     float                    fSpeedX;         //X方向速度

@@ -45,12 +45,13 @@ public:
 
 private:
     // private variables
-    CSelfAlgParam m_AlgParams;
+    CSelfAlgParam m_stFusionAlgParams;
     CAlgResult m_stFusionAlgSrcdata;
 
     unsigned long m_pc_timestamp;
     unsigned long m_video_timestamp;
     std::vector<unsigned long> m_camera_timestamp;
+
     // private functions
     CCommonDataPtr m_CommonData;
     std::vector<FUKalmanBoxTracker> m_trackers; // 存储所有的轨迹
@@ -58,6 +59,7 @@ private:
     std::shared_ptr<Process_camera> m_camera_handler; // process_camera对象指针
     std::shared_ptr<Process_lidar> m_lidar_handler;   // process_lidar对象指针
     std::shared_ptr<Update_tracks> m_update_handler;
+    
     std::shared_ptr<fusion_match_out> m_match_out;
     std::shared_ptr<cal_dis_result> m_cal_dis_result;
     std::shared_ptr<IouAssociate> m_iouassociate_handler;

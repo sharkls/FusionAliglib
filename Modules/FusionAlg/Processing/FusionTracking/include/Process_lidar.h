@@ -33,7 +33,7 @@ private:
     std::vector<int> vaild_elder;
     // // 目标向量（需要外面传进来）
     nlohmann::json m_fusion_parameter;
-    std::unordered_map<int, std::pair<int, float>> *m_chedao = nullptr;
+    // std::unordered_map<int, std::pair<int, float>> *m_chedao = nullptr;
     fusion_match_out *m_associate_out = nullptr;
     cal_dis_result *m_cal_dis_result = nullptr;
     void setout_det(std::vector<int>& matched_all_dets_index, std::vector<int>& unmatched_elder_trks_index, std::vector<int>& matched_elder_trks_index);

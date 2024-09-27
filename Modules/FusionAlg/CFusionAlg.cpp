@@ -182,6 +182,7 @@ void CFusionAlg::RunAlgorithm(void* p_pSrcData)
         outputFrameCount = 0;
         startTime = currentTime;
     }
+    LOG(INFO) << "CFusionAlg::RunAlgorithm ---- end." ;
 } 
 
 

@@ -31,6 +31,7 @@ void CFusionPostprocess::init(CSelfAlgParam* p_pAlgParam)
     _dLidarLon = p_PostFuTrAlgParam.m_tLidarParam.vecLidarDev()[0].dLidarLon();
     _dLidarLat = p_PostFuTrAlgParam.m_tLidarParam.vecLidarDev()[0].dLidarLat();
     _fLidarNorthAngle = p_PostFuTrAlgParam.m_tLidarParam.vecLidarDev()[0].fLidarNorthAngle();
+    
     LOG(INFO) << "_dLidarLon:" << _dLidarLon;
     LOG(INFO) << "_dLidarLat:" << _dLidarLat;
     LOG(INFO) << "_fLidarNorthAngle:" << _fLidarNorthAngle;

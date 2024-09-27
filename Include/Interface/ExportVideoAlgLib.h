@@ -7,7 +7,6 @@
  *******************************************************/
 #pragma once
 #include <string>
-// #include "IVideoAlg.h"
 
 #include "CSelfAlgParam.h"
 

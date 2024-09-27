@@ -20,20 +20,20 @@ class Update_tracks
 private:
     /* data */
     nlohmann::json m_fusion_parameter;
-    std::unordered_map<int, std::pair<int, float>>  *m_chedao;
+    // std::unordered_map<int, std::pair<int, float>>  *m_chedao;
     std::vector<int> camera_create_trackers;
     std::vector<int> motor_vehicle_labels;
 
     int m_height;   // 车道角覆盖范围准换到像素大小
     int m_width;
 
-    float *m_x_limit;
-    float *m_y_limit;
+    // float *m_x_limit;
+    // float *m_y_limit;
     void get_state(FUKalmanBoxTracker& tracker);
     void get_angle(FUKalmanBoxTracker& tracker);
 
 public:
-    Update_tracks(nlohmann::json &parameter, std::unordered_map<int, std::pair<int, float>> *chedao, float x_limit[], float y_limit[]);
+    Update_tracks(nlohmann::json &parameter);
     ~Update_tracks();
 
     // 生成新的轨迹

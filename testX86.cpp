@@ -549,7 +549,7 @@ void read_fusiondata(const std::string & data_path, int i, int cam_num, CAlgResu
 }
 
 void save_fusion_result_to_csv(std::string path, CAlgResult outputAlgResult){
-    std::string rootPath = "/data/AlgLib/";
+    std::string rootPath = "/share/Code/FusionAliglib/";
     std::string filepath1 = rootPath + "Output/Configs/Alg/fusion/fusion_param.json";
     nlohmann::json temp_param1;
     bool isload = jsonload(temp_param1, filepath1);
@@ -672,11 +672,12 @@ int testFusion()
     {
         std::cout<<"Processing Frame: ("<<std::to_string(i)<<")  started."<<endl;
         CAlgResult *l_pSrcData = new CAlgResult();
-        read_fusiondata(rootPath + "data/fusion_test_data/" , i, cam_num, *l_pSrcData, l_stFuAlgParam);
+        read_fusiondata(rootPath + "data/fusion_test_data/", i, cam_num, *l_pSrcData, l_stFuAlgParam);
         auto t_start = std::chrono::steady_clock::now();
 
         if (l_pSrcData->vecFrameResult().size() > 0)
-        {
+        {   
+            std::cout << "-----------------------------Enter FusionRunAlgorithm!" << std::endl;
             l_pObj->RunAlgorithm(l_pSrcData);
             timestamp = timestamp + 100;
             auto t_end = std::chrono::steady_clock::now();
