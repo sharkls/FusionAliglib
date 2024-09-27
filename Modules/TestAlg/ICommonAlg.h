@@ -18,12 +18,15 @@ class ICommonData{
   ~ICommonData() = default;
 
  public:
-    // video
-    int64_t VideoStartTime;
-    CVideoSrcDataTimematch img_SrcData;     // 图像原始数据(软件传输到算法的原始数据)
-    std::vector<cv::Mat> img_batch;         // 图像检测算法的输入（组成batch后图像数据）
-    void* cpu_buffer;                       // 检测算法的输出，图像后处理算法的输入
-    CAlgResult videoAlgResult;              // 图像后处理算法输出
+     // video
+     int64_t VideoStartTime;
+     CVideoSrcDataTimematch img_SrcData;     // 图像原始数据(软件传输到算法的原始数据)
+     std::vector<cv::Mat> img_batch;         // 图像检测算法的输入（组成batch后图像数据）
+     void* cpu_buffer;                       // 检测算法的输出，图像后处理算法的输入
+     CAlgResult videoAlgResult;              // 图像后处理算法输出
+
+     // Test
+      int64_t TestStartTime;
 };
 
 using CCommonDataPtr = std::shared_ptr<ICommonData>;

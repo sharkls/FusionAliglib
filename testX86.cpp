@@ -30,6 +30,7 @@
 #include "CVideoSrcData.h"
 #include "ExportFusionAlgLib.h"
 #include "ExportTestAlgLib.h"
+#include "ExportTestAlgLib.h"
 #include <experimental/filesystem>
 
 using namespace tinyxml2;
@@ -350,12 +351,12 @@ void test_cb(const CAlgResult& ms, void* hd)
 
 void test()
 {
-    std::string img_path = "/share/Code/FusionAliglib/data/video_data/";
+    std::string img_path = "/share/FusionAliglib/data/video_data/";
     //算法接口调用流程基本如下：
-    ITestAlg* l_pObj = CreateTestAlgObj("/share/Code/FusionAliglib/Output");
+    ITestAlg* l_pObj = CreateTestAlgObj("/share/FusionAliglib/Output");
     //准备算法参数
     CSelfAlgParam *l_stTestAlgParam = new CSelfAlgParam();
-    l_stTestAlgParam->m_strRootPath = "/share/Code/FusionAliglib/Output";
+    l_stTestAlgParam->m_strRootPath = "/share/FusionAliglib/Output";
     l_stTestAlgParam->m_strTestCfgPath = "/Configs/Alg/test/test.yaml";
 
 

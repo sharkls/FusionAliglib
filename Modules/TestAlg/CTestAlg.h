@@ -49,9 +49,11 @@ public:
     std::string	GetVersion();
     int64_t GetTimeStamp();
 
-
+    //  回调函数
     AlgCallback test_callback;
     void *test_hd;
+
+    
     IMakeAlgPtr p_makeAlgs;
     CCompositeAlgsPtr p_CompositeAlgs;
     

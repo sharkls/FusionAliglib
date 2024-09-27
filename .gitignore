@@ -3,3 +3,4 @@ data/
 build/
 Output/FusionResults/
 .vscode/
+*.so

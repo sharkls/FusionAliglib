@@ -33,6 +33,7 @@ class CCompositeAlgs final : public ICommonAlg{
           command->execute();
       }
   }
+  
   void setCommonData(CCommonDataPtr p_commonData) override
   {
       m_CommonData = p_commonData;
