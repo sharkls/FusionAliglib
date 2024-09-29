@@ -45,8 +45,8 @@ void CFusionPostprocess::execute()
     LOG(INFO) << "CFusionPostprocess::execute  status :  started.";
 
     // 1. 融合跟踪后处理数据获取
-    CAlgResult FuTrAlgSrcdata = getCommonData()->FuTrAlgdata;
-    xt::xarray<float> pc =  getCommonData()->m_fTrackXarrayResult;
+    CAlgResult FuTrAlgSrcdata = getCommonData()->FuTrAlgdata;                // 预处理完的结果级数据
+    xt::xarray<float> pc =  getCommonData()->m_fTrackXarrayResult;           // 跟踪完的结果级数据
 
     // 2. 融合跟踪后处理输出数据初始化
     CAlgResult FuTralgResult;

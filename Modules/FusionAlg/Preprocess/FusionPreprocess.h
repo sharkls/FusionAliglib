@@ -71,10 +71,6 @@ class CFusionPreprocess : public ICommonAlg{
         size_t  cam_num_;
         size_t  img_Width;                     // 图像宽度             
         size_t  img_High;                      // 图像高度
-        vector<cv::Mat> m_vecCameraMatrix;     // 相机内参
-        vector<cv::Mat> m_vecDistCoeffs;       // 畸变系数
-        vector<cv::Mat> m_vecRotation;         // 旋转矩阵
-        vector<cv::Mat> m_vecTranslation;      // 平移矩阵
         CCameraParam m_CameraParam;            // 相机参数
         
 

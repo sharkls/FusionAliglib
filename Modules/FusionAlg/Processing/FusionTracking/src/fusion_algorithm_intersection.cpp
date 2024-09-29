@@ -22,21 +22,10 @@ void Fusion_Algorithm_Intersection::init(CSelfAlgParam *p_pAlgParam)
     pcWait = m_stFusionAlgParams.m_fusion_parameter["fusion_param"]["PcWaitFrame"];
     pcLast = m_stFusionAlgParams.m_fusion_parameter["fusion_param"]["PcLastFrame"];
 
-    // 加载车道角
-    // std::pair<float [2], float [2]> limit = FusionFunction::load_chedao(m_chedao);
-    // m_xlimit[0] = limit.first[0];
-    // m_xlimit[1] = limit.first[1];
-    // m_ylimit[0] = limit.second[0];
-    // m_ylimit[1] = limit.second[1];
-
     m_match_out = make_shared<fusion_match_out>();
     m_cal_dis_result = make_shared<cal_dis_result>();
     m_lidar_handler = make_shared<Process_lidar>(m_stFusionAlgParams.m_fusion_parameter, m_match_out, m_cal_dis_result);
-    // m_update_handler = make_shared<Update_tracks>(m_stFusionAlgParams.m_fusion_parameter, &m_chedao, m_xlimit, m_ylimit);
     m_update_handler = make_shared<Update_tracks>(m_stFusionAlgParams.m_fusion_parameter);
-    
-    // m_camera_handler = make_shared<Process_camera>(m_stFusionAlgParams.m_fusion_parameter, m_match_out, m_cal_dis_result);
-    
     m_iouassociate_handler = std::make_shared<IouAssociate>(m_stFusionAlgParams.m_fusion_parameter);
     m_disassociate_handler =  std::make_shared<DistanceAssociate>(m_cal_dis_result, m_stFusionAlgParams.m_fusion_parameter);
 }
@@ -57,6 +46,7 @@ void Fusion_Algorithm_Intersection::execute()
             m_pc_timestamp = m_stFusionAlgSrcdata.vecFrameResult()[t].mapTimeStamp()[TIMESTAMP_PCSRCINFO_SUB];
             time_since_pcinput = 0;
             time_pcinput_last ++;
+
         }else if(m_stFusionAlgSrcdata.vecFrameResult()[t].eDataType() == DATA_TYPE_VIDEO_RESULT)
         {
             m_camera_timestamp.push_back(m_stFusionAlgSrcdata.vecFrameResult()[t].mapTimeStamp()[TIMESTAMP_PCSRCINFO_SUB]);
@@ -81,7 +71,7 @@ void Fusion_Algorithm_Intersection::execute()
         throw FusionException();
     }
 
-    // 点云连续丢失帧数等于pcWait（5）时， 切换到图像跟踪
+    // 点云连续丢失帧数等于pcWait（5）时， 切换到图像跟踪并抛出异常
     if(time_since_pcinput == pcWait){
         LOG(ERROR)<<"---------------------CHANGE ONLY VIDEO MODEL---------------------";
         m_trackers.clear();
@@ -90,6 +80,7 @@ void Fusion_Algorithm_Intersection::execute()
         last_timestamp = m_video_timestamp;
         throw FusionException();
     }
+
     if(ModelofFusion == 1){
         FusionPc();
     }
@@ -128,23 +119,9 @@ void Fusion_Algorithm_Intersection::FusionPc()
     if (int(m_stFusionAlgParams.m_fusion_parameter["fusion_param"]["Fusion_Lidar"]) ==  1){
         m_lidar_handler->process_lidar_data(&pc);
         m_lidar_handler->excute_match_lidar_stage_3rd_match(trackers, m_iouassociate_handler, m_disassociate_handler);
-
         m_lidar_handler->update_type(trackers, m_pc_timestamp);
         m_update_handler->create_tracks(m_match_out, trackers, m_pc_timestamp, 1);
     }
-
-    // // camera fusion
-    // if (int(m_stFusionAlgParams.m_fusion_parameter["fusion_param"]["Fusion_Video"]) ==  1){
-    //     for (auto it = video.begin(); it != video.end(); it++){
-    //         m_camera_handler->process_camera_data(&(*it));
-    //         m_camera_handler->excute_match_camera_stage(trackers, m_iouassociate_handler, m_disassociate_handler);
-
-    //         m_camera_handler->update_type(trackers, m_video_timestamp);
-    //         m_update_handler->create_tracks(m_match_out, trackers, m_video_timestamp, 0);
-    //     }
-
-    //     m_camera_handler->getCameraBoxInfo(&video);
-    // }
 
     // update
     xt::xarray<float> fusion_track_result = xt::empty<float>({0, 22});
@@ -154,38 +131,3 @@ void Fusion_Algorithm_Intersection::FusionPc()
 
     setCommonData(m_CommonData);
 }
-
-// void Fusion_Algorithm_Intersection::FusionOnlyVideo()
-// {
-//     std::vector<xt::xarray<float>> &video = getCommonData()->m_vecVideoXarrayResult;
-//     // predict
-//     dt = float(m_video_timestamp - last_timestamp) / 1000;
-//     LOG(INFO) << "FusionOnlyVideo----------------------------- dt -----------------: " << dt;
-//     std::vector<FUKalmanBoxTracker> &trackers = m_trackers;
-//     int trackers_num = trackers.size();
-//     if (trackers_num > 0){
-//         for (int i = 0; i < trackers_num; i++)
-//         {
-//             trackers[i].predict(dt);
-//         }
-//     }
-//     last_timestamp = m_video_timestamp;
-//     // camera fusion
-//     if (int(m_stFusionAlgParams.m_fusion_parameter["fusion_param"]["Fusion_Video"]) ==  1){
-//         for (auto it = video.begin(); it != video.end(); it++){
-//             m_camera_handler->process_camera_data(&(*it));
-//             m_camera_handler->excute_match_camera_stage(trackers, m_iouassociate_handler, m_disassociate_handler);
-//             m_camera_handler->update_onlyvideo(trackers, m_video_timestamp);
-//             m_update_handler->create_onlyvideotracks(m_match_out, trackers, m_video_timestamp, 0);
-//         }
-//         m_camera_handler->getCameraBoxInfo(&video);
-//     }else{
-//         LOG(ERROR) << " ONLY VIDEO BUT Fusion_Video != 1";
-//     }
-//     // update
-//     xt::xarray<float> fusion_track_result = xt::empty<float>({0, 22});
-//     m_update_handler->update_onlyvideo(trackers, fusion_track_result, m_video_timestamp, dt);
-//     m_CommonData->m_fTrackXarrayResult = fusion_track_result;
-//     m_CommonData->sourceDataType = ModelofFusion;
-//     setCommonData(m_CommonData);
-// }

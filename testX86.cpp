@@ -697,7 +697,7 @@ int testFusion()
 int main(int argc, char* argv[])
 {
     // testVideo();
-    test();
-    // testFusion();
+    // test();
+    testFusion();
     return 0;
 }

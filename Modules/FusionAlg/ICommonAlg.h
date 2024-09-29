@@ -21,7 +21,7 @@ class ICommonData{
     std::vector<xt::xarray<float>> m_vecVideoXarrayResult;
     xt::xarray<float> m_fPcXarrayResult;
     xt::xarray<float> m_fTrackXarrayResult;
-    int sourceDataType = 1;
+    int sourceDataType = 1;       // 1： 点云融合    2： 视频融合
 };
 
 using CCommonDataPtr = std::shared_ptr<ICommonData>;

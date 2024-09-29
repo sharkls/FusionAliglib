@@ -156,8 +156,9 @@ void Update_tracks::update(std::vector<FUKalmanBoxTracker> &_m_trackers, xt::xar
         if (_m_trackers[i].camera_updated == 1 && _m_trackers[i].lidar_updated  == 0 && _m_trackers[i].radar_updated == 0){
             src = 1;
         }else if (_m_trackers[i].camera_updated == 0 && _m_trackers[i].lidar_updated  == 1 && _m_trackers[i].radar_updated == 0)
-        {
-            src = 2;
+        {   
+            if(_m_trackers[i]._bbox(15) == 4) src = 4;     // 单雷达时，若原始bbox的source_data是已经融合的结果（4），则保留其融合属性
+            else src = 2;
         }else if (_m_trackers[i].camera_updated == 0 && _m_trackers[i].lidar_updated  == 0 && _m_trackers[i].radar_updated == 1){
             src = 3;
         }else if(_m_trackers[i].camera_updated == 1 && _m_trackers[i].lidar_updated  == 1 && _m_trackers[i].radar_updated == 0){

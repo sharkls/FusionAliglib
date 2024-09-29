@@ -25,10 +25,7 @@ void CFusionPreprocess::init(CSelfAlgParam* p_pAlgParam)
     m_CameraParam = p_PreFuTrAlgParam.m_tCameraParam;
     img_Width = p_PreFuTrAlgParam.m_fusion_parameter["fusion_param"]["camera_raw_size"][0];
     img_High = p_PreFuTrAlgParam.m_fusion_parameter["fusion_param"]["camera_raw_size"][1];
-    // m_vecCameraMatrix =  p_PreFuTrAlgParam.m_tCameraParam.vecCameraDev().vecInParameter();
-    // m_vecDistCoeffs = p_PreFuTrAlgParam.m_tCameraParam.vecDistMatrix();
-    // m_vecRotation = p_PreFuTrAlgParam.m_tCameraParam.vecRotateMatrix();
-    // m_vecTranslation = p_PreFuTrAlgParam.m_tCameraParam.vecTranslationMatrix();
+    
     LOG(INFO) << "CFusionPreprocess::init status :   finish!";
 }
 
@@ -422,5 +419,5 @@ void CFusionPreprocess::MatchAndFuseTargets(xt::xarray<float>& pc, std::vector<x
         xt::xarray<float> no_match_result = xt::view(vecVideoResult[index_cam], xt::keep(unmatched_indices));
         m_vecNoMatchVideoResult.push_back(no_match_result);
     }
-    // LOG(INFO) << "CFusionPreprocess::MatchAndFuseTargets ---- status : end!";
+    // LOG(INFO) << "CFusionPreprocess::MatchAndFuseTargets ---- status : end!" << "matched_camera_indices: " << matched_camera_indices.size();
 }
